@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { initializeApp } from 'firebase/app';
 import { BrowserPDF417Reader } from '@zxing/browser';
-import { parsearDNIArgentino } from './utils/parsearDNIArgentino';
+import { parsearDNIArgentino } from './src/utils/parsearDNIArgentino';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { 
   getFirestore, 
