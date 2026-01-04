@@ -99,6 +99,61 @@ export default function App() {
   return onAuthStateChanged(auth, setUsuario);
 }, []);
 
+useEffect(() => {
+  if (!escaneando) return;
+
+  const iniciarScannerReal = async () => {
+    if (!window.Dynamsoft?.DBR) {
+      mostrarAviso("Cargando lector de DNI...");
+      setEscaneando(false);
+      return;
+    }
+
+    try {
+      window.Dynamsoft.DBR.BarcodeReader.license =
+        "DLS2eyJoYW5kc2hha2VDb2RlIjoiMTA0Mjk2NTI3LVRYZ3VOMkdzSENPdjIxRzN6RzZ1IiwiaW5mbyI6ImRlbW8ifQ==";
+
+      const reader = await window.Dynamsoft.DBR.BarcodeReader.createInstance();
+      scannerRef.current = reader;
+
+      await reader.updateRuntimeSettings({
+        barcodeFormatIds: window.Dynamsoft.DBR.EnumBarcodeFormat.BF_PDF417,
+        expectedBarcodesCount: 1
+      });
+
+      reader.onUniqueRead = async (results) => {
+        if (!results || !results.length) return;
+
+        const rawText = results[0]?.barcodeText;
+        if (!rawText) return;
+
+        reader.onUniqueRead = null;
+        procesarPDF417DNI(rawText);
+        await detenerEscaneo();
+      };
+
+      // ⬅️ ACÁ el div YA EXISTE
+      await reader.decodeFromVideoDevice(undefined, "reader");
+
+    } catch (error) {
+      console.error("Error iniciando cámara:", error);
+      mostrarAviso("No se pudo acceder a la cámara");
+      await detenerEscaneo();
+    }
+  };
+
+  iniciarScannerReal();
+
+  // cleanup de seguridad
+  return () => {
+    if (scannerRef.current) {
+      scannerRef.current.stop();
+      scannerRef.current.destroy();
+      scannerRef.current = null;
+    }
+  };
+}, [escaneando]);
+
 
   useEffect(() => {
     if (!usuario || !db || !categoriaSel) return;
@@ -215,7 +270,11 @@ const detenerEscaneo = async () => {
         </div>
         <form onSubmit={guardarJugadora} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
           <div className="grid grid-cols-1 gap-4">
-            <button type="button" onClick={iniciarEscaneo} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-2 active:scale-95 shadow-lg transition-all">
+            <button
+              type="button"
+              onClick={() => setEscaneando(true)}
+              className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest"
+            >
               📷 ESCANEAR BARRAS DNI
             </button>
             
