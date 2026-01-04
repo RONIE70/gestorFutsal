@@ -101,15 +101,14 @@ export default function App() {
 
   let active = true;
   const reader = new BrowserPDF417Reader();
-  scannerRef.current = reader;
 
   const iniciarCamara = async () => {
-    await new Promise(res => setTimeout(res, 300)); // ⬅️ CLAVE
+    await new Promise(res => setTimeout(res, 300));
 
     if (!active) return;
 
     try {
-      await reader.decodeFromVideoDevice(
+      const controls = await reader.decodeFromVideoDevice(
         undefined,
         'reader',
         (result) => {
@@ -119,7 +118,10 @@ export default function App() {
           }
         }
       );
+
+      scannerRef.current = controls; // ✅ guardar controls
     } catch (e) {
+      console.error(e);
       mostrarAviso('No se pudo abrir la cámara');
       detenerEscaneo();
     }
@@ -129,19 +131,22 @@ export default function App() {
 
   return () => {
     active = false;
-    reader.reset();
-    scannerRef.current = null;
+    if (scannerRef.current) {
+      scannerRef.current.stop(); // ✅ método correcto
+      scannerRef.current = null;
+    }
   };
 }, [escaneando]);
 
 
   const detenerEscaneo = () => {
   if (scannerRef.current) {
-    scannerRef.current.reset();
+    scannerRef.current.stop(); // ✅ NO reset
     scannerRef.current = null;
   }
   setEscaneando(false);
 };
+
 
 
 /* ===================== DNI PROCESS ===================== */
