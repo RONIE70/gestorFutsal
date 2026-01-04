@@ -15,9 +15,6 @@ import {
   where 
 } from 'firebase/firestore';
 
-// Librería para el escáner desde CDN
-const [escaneando, setEscaneando] = useState(false);
-const scannerRef = useRef(null);
 
 
 // --- CONFIGURACIÓN DE FIREBASE ---
