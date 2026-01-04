@@ -95,8 +95,8 @@ export default function App() {
   }, []);
 
   /* ===================== ZXING SCANNER ===================== */
-  let ultimoTexto = null;
-  let lecturasIguales = 0;
+  const ultimoTextoRef = useRef(null);
+const lecturasIgualesRef = useRef(0);
 
 
   useEffect(() => {
@@ -126,7 +126,7 @@ export default function App() {
       (result, err) => {
   if (!result) {
     if (err && err.name !== 'NotFoundException') {
-      console.warn('⚠️ ZXing error:', err.name);
+      // Ignoramos errores normales de ZXing (son por frame)
     }
     return;
   }
@@ -136,19 +136,20 @@ export default function App() {
   const texto = result.getText();
   console.log('📄 TEXTO LEÍDO:', texto);
 
-  if (texto === ultimoTexto) {
-    lecturasIguales++;
-  } else {
-    ultimoTexto = texto;
-    lecturasIguales = 1;
-  }
+  if (texto === ultimoTextoRef.current) {
+  lecturasIgualesRef.current++;
+} else {
+  ultimoTextoRef.current = texto;
+  lecturasIgualesRef.current = 1;
+}
 
-  console.log('🔁 Coincidencias:', lecturasIguales);
+console.log('🔁 Coincidencias:', lecturasIgualesRef.current);
 
-  if (lecturasIguales >= 2) {
-    procesarPDF417DNI(texto);
-    detenerEscaneo();
-  }
+if (lecturasIgualesRef.current >= 2) {
+  procesarPDF417DNI(texto);
+  detenerEscaneo();
+}
+
 }
 
 
