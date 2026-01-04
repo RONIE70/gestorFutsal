@@ -126,51 +126,19 @@ export default function App() {
 
  // --- ESCÁNER DNI ARGENTINO PDF417 (Dynamsoft) ---
 
-const iniciarEscaneo = async () => {
-  if (escaneando) return;
-
-  if (!window.Dynamsoft?.DBR) {
-    mostrarAviso("Cargando lector de DNI...");
-    return;
-  }
-
+const detenerEscaneo = async () => {
   try {
-    setEscaneando(true);
-
-    window.Dynamsoft.DBR.BarcodeReader.license =
-      "DLS2eyJoYW5kc2hha2VDb2RlIjoiMTA0Mjk2NTI3LVRYZ3VOMkdzSENPdjIxRzN6RzZ1IiwiaW5mbyI6ImRlbW8ifQ==";
-
-    const reader = await window.Dynamsoft.DBR.BarcodeReader.createInstance();
-    scannerRef.current = reader;
-
-    await reader.updateRuntimeSettings({
-      barcodeFormatIds: window.Dynamsoft.DBR.EnumBarcodeFormat.BF_PDF417,
-      expectedBarcodesCount: 1
-    });
-
-    // CALLBACK CORRECTO
-    reader.onFrameRead = async (results) => {
-      if (!results || results.length === 0) return;
-
-      const rawText = results[0]?.barcodeText;
-      if (!rawText) return;
-
-      reader.onFrameRead = null; // evita lecturas múltiples
-      procesarPDF417DNI(rawText);
-      await detenerEscaneo();
-    };
-
-    reader.onUniqueRead = null;
-
-    await reader.startScanning(true, "environment", "reader");
-  } catch (error) {
-    console.error("Error al iniciar escáner:", error);
-    mostrarAviso("No se pudo acceder a la cámara");
-    await detenerEscaneo();
+    if (scannerRef.current) {
+      await scannerRef.current.stop();
+      scannerRef.current.destroy();
+      scannerRef.current = null;
+    }
+  } catch (e) {
+    console.warn("Error al detener cámara:", e);
+  } finally {
+    setEscaneando(false);
   }
 };
-
-
 
   const guardarJugadora = async (e) => {
     e.preventDefault();
