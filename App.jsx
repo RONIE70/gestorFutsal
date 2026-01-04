@@ -68,6 +68,12 @@ const TIPOS_FINANZAS = [
 ];
 
 export default function App() {
+
+  const readerRef = useRef(null);
+  const scannerRef = useRef(null);
+  const ultimoTextoRef = useRef(null);
+  const lecturasIgualesRef = useRef(0);
+
   const [usuario, setUsuario] = useState(null);
   const [db, setDb] = useState(null);
   const [jugadoras, setJugadoras] = useState([]);
@@ -81,7 +87,6 @@ export default function App() {
   const [mensaje, setMensaje] = useState(null);
   const [fotoDniBase64, setFotoDniBase64] = useState(null);
 
-  const scannerRef = useRef(null);
 
     /* ===================== INIT FIREBASE ===================== */
 
@@ -94,56 +99,77 @@ export default function App() {
     return onAuthStateChanged(auth, setUsuario);
   }, []);
 
+
+ /*---------------------------------------------*/
+  const iniciarCamara = async () => {
+  if (!readerRef.current) return;
+
+  console.log('🎥 Iniciando cámara PDF417');
+
+  try {
+    const controls = await readerRef.current.decodeFromVideoDevice(
+      undefined,
+      'reader',
+      (result) => {
+        if (!result) return;
+
+        console.log('📦 RESULTADO:', result);
+
+        const texto = result.getText();
+
+        if (texto === ultimoTextoRef.current) {
+          lecturasIgualesRef.current++;
+        } else {
+          ultimoTextoRef.current = texto;
+          lecturasIgualesRef.current = 1;
+        }
+
+        console.log('🔁 Coincidencias:', lecturasIgualesRef.current);
+
+        if (lecturasIgualesRef.current >= 2) {
+          procesarPDF417DNI(texto);
+          detenerEscaneo();
+        }
+      }
+    );
+
+    scannerRef.current = controls;
+    console.log('📡 ZXing escaneando');
+
+  } catch (e) {
+    console.error('❌ Error cámara:', e);
+    mostrarAviso('No se pudo abrir la cámara');
+    detenerEscaneo();
+  }
+};
+
+
   /* ===================== ZXING SCANNER ===================== */
-  const ultimoTextoRef = useRef(null);
-  const lecturasIgualesRef = useRef(0);
 
-
-  useEffect(() => {
+ useEffect(() => {
   if (!escaneando) return;
 
-  let active = true;
-  const reader = new BrowserPDF417Reader();
+  readerRef.current = new BrowserPDF417Reader();
 
-  useEffect(() => {
-  if (!escaneando) return;
-
-  let active = true;
-  const reader = new BrowserPDF417Reader();
-
-  requestAnimationFrame(iniciarCamara);
+  requestAnimationFrame(() => {
+    iniciarCamara();
+  });
 
   return () => {
-    active = false;
     if (scannerRef.current) {
       scannerRef.current.stop();
       scannerRef.current = null;
     }
-  };
-}, [escaneando]);
 
-
-
-
-  requestAnimationFrame(iniciarCamara);
-
-  return () => {
-    active = false;
-    if (scannerRef.current) {
-      scannerRef.current.stop(); // ✅ método correcto
-      scannerRef.current = null;
+    if (readerRef.current) {
+      readerRef.current.reset();
+      readerRef.current = null;
     }
+
+    ultimoTextoRef.current = null;
+    lecturasIgualesRef.current = 0;
   };
 }, [escaneando]);
-
-
-  const detenerEscaneo = () => {
-  if (scannerRef.current) {
-    scannerRef.current.stop(); // ✅ NO reset
-    scannerRef.current = null;
-  }
-  setEscaneando(false);
-};
 
 
 
