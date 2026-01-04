@@ -6,3 +6,11 @@ body {
   margin: 0;
   background-color: #f1f5f9;
 }
+
+
+  #reader video {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    display: block !important;
+  }
