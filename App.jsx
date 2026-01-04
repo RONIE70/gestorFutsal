@@ -103,29 +103,42 @@ export default function App() {
   const reader = new BrowserPDF417Reader();
 
   const iniciarCamara = async () => {
-    await new Promise(res => setTimeout(res, 300));
+  await new Promise(res => setTimeout(res, 300));
 
-    if (!active) return;
+  if (!active) return;
 
-    try {
-      const controls = await reader.decodeFromVideoDevice(
-        undefined,
-        'reader',
-        (result) => {
-          if (result) {
-            procesarPDF417DNI(result.getText());
-            detenerEscaneo();
-          }
+  try {
+    console.log('escaneando frame');
+
+    const controls = await reader.decodeFromConstraints(
+      {
+        audio: false,
+        video: {
+          facingMode: { ideal: 'environment' }, // cámara trasera
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+          // focusMode NO se fuerza porque no está soportado en todos los browsers
         }
-      );
+      },
+      'reader',
+      (result) => {
+        if (result) {
+          procesarPDF417DNI(result.getText());
+          detenerEscaneo();
+        }
+      }
+    );
 
-      scannerRef.current = controls; // ✅ guardar controls
-    } catch (e) {
-      console.error(e);
-      mostrarAviso('No se pudo abrir la cámara');
-      detenerEscaneo();
-    }
-  };
+    // ✅ guardar controls para poder detener la cámara después
+    scannerRef.current = controls;
+
+  } catch (e) {
+    console.error('Error cámara:', e);
+    mostrarAviso('No se pudo abrir la cámara');
+    detenerEscaneo();
+  }
+};
+
 
   iniciarCamara();
 
@@ -354,8 +367,8 @@ export default function App() {
           <h2 className="text-white font-black uppercase tracking-widest text-xs mb-4 italic">Enfoca el Código de Barras</h2>
           <video
   id="reader"
-  className="w-full max-w-sm rounded-3xl border-4 border-indigo-600 shadow-2xl bg-black object-cover"
-  style={{ height: '260px' }}
+  className="w-full max-w-md rounded-3xl border-4 border-indigo-600 shadow-2xl bg-black object-cover"
+  style={{ height: '360px' }}
   autoPlay
   muted
   playsInline
