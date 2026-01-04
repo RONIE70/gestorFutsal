@@ -15,7 +15,8 @@ import {
 } from 'firebase/firestore';
 
 // Librería para el escáner desde CDN
-const HTML5_QRCODE_SCRIPT = "https://unpkg.com/html5-qrcode";
+const DYNAMSOFT_SCRIPT = "https://cdn.jsdelivr.net/npm/dynamsoft-javascript-barcode@9.6.40/dist/dbr.js";
+
 
 // --- CONFIGURACIÓN DE FIREBASE ---
 // IMPORTANTE: Asegúrate de completar estos datos con los de tu consola de Firebase
@@ -84,19 +85,20 @@ export default function App() {
   const scannerRef = useRef(null);
 
   useEffect(() => {
-    const script = document.createElement("script");
-    script.src = HTML5_QRCODE_SCRIPT;
-    script.async = true;
-    document.body.appendChild(script);
+  const script = document.createElement("script");
+  script.src = DYNAMSOFT_SCRIPT;
+  script.async = true;
+  document.body.appendChild(script);
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const firestore = getFirestore(app);
-    setDb(firestore);
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const firestore = getFirestore(app);
+  setDb(firestore);
 
-    signInAnonymously(auth);
-    return onAuthStateChanged(auth, setUsuario);
-  }, []);
+  signInAnonymously(auth);
+  return onAuthStateChanged(auth, setUsuario);
+}, []);
+
 
   useEffect(() => {
     if (!usuario || !db || !categoriaSel) return;
@@ -122,84 +124,115 @@ export default function App() {
     }
   };
 
-  // --- LÓGICA DE ESCÁNER PARA DNI ARGENTINO ---
-const iniciarEscaneo = () => {
-  if (!window.Html5Qrcode) {
-    aviso("Cargando lector...");
+ // --- ESCÁNER DNI ARGENTINO PDF417 (Dynamsoft) ---
+
+const iniciarEscaneo = async () => {
+  if (escaneando) return;
+
+  if (!window.Dynamsoft || !window.Dynamsoft.DBR) {
+    mostrarAviso("Inicializando lector de DNI...");
     return;
   }
-  setEscaneando(true);
-  setTimeout(() => {
-    const html5QrCode = new window.Html5Qrcode("reader");
-    scannerRef.current = html5QrCode;
-    html5QrCode.start(
-      { facingMode: "environment" },
-      { fps: 10, qrbox: { width: 280, height: 120 } }, // Ajustado para el código largo del DNI
-      (text) => {
-        try {
-          // El DNI Argentino puede venir con "@" o con "|"
-          const delimitador = text.includes('|') ? '|' : '@';
-          const partes = text.split(delimitador);
-          
-          if (partes.length >= 7) {
-            // Posiciones estándar del DNI Argentino:
-            // 1: Apellido, 2: Nombre, 4: DNI, 6: Fecha Nacimiento
-            const apellido = partes[1].trim();
-            const nombre = partes[2].trim();
-            const dni = partes[4].trim();
-            const fechaNac = partes[6].trim();
 
-            setJugadoraEdit(prev => ({
-              ...prev,
-              name: `${nombre} ${apellido}`,
-              dni: dni,
-              birthDate: fechaNac
-            }));
-            
-            aviso("DNI Argentino Detectado");
-            detenerEscaneo();
-          }
-        } catch (e) { 
-          aviso("Error al leer los datos del DNI"); 
-        }
-      },
-      () => {}
-    ).catch(() => { 
-      setEscaneando(false); 
-      aviso("Error de cámara"); 
+  try {
+    setEscaneando(true);
+
+    // Licencia Dynamsoft (NO usar await)
+    window.Dynamsoft.DBR.BarcodeReader.license =
+      "DLS2eyJoYW5kc2hha2VDb2RlIjoiMTA0Mjk2NTI3LVRYZ3VOMkdzSENPdjIxRzN6RzZ1IiwiaW5mbyI6ImRlbW8ifQ==";
+
+    const reader = await window.Dynamsoft.DBR.BarcodeReader.createInstance();
+    scannerRef.current = reader;
+
+    await reader.updateRuntimeSettings({
+      barcodeFormatIds: window.Dynamsoft.DBR.EnumBarcodeFormat.BF_PDF417,
+      expectedBarcodesCount: 1
     });
-  }, 500);
+
+    const results = await reader.decodeFromCamera("environment", "reader");
+
+    if (!results || results.length === 0) {
+      mostrarAviso("No se detectó un DNI válido");
+      await detenerEscaneo();
+      return;
+    }
+
+    const rawText = results[0]?.barcodeText;
+    if (!rawText) {
+      mostrarAviso("Lectura inválida del DNI");
+      await detenerEscaneo();
+      return;
+    }
+
+    procesarPDF417DNI(rawText);
+    await detenerEscaneo();
+  } catch (error) {
+    console.error("Error escáner DNI:", error);
+    mostrarAviso("No se pudo acceder a la cámara");
+    await detenerEscaneo();
+  }
 };
 
-  const detenerEscaneo = () => {
+const detenerEscaneo = async () => {
+  try {
     if (scannerRef.current) {
-      scannerRef.current.stop().then(() => setEscaneando(false)).catch(err => console.error(err));
-    } else {
-      setEscaneando(false);
+      await scannerRef.current.stop();
+      scannerRef.current.destroy();
+      scannerRef.current = null;
     }
-  };
+  } catch (error) {
+    console.warn("Error al detener escáner:", error);
+  } finally {
+    setEscaneando(false);
+  }
+};
 
-  const procesarDatosDNI = (text) => {
-    try {
-      const partes = text.split('|');
-      if (partes.length >= 5) {
-        const apellido = partes[1].trim();
-        const nombre = partes[2].trim();
-        const dni = partes[4].trim();
-        const fechaNac = partes[6].trim();
+const procesarPDF417DNI = (text) => {
+  try {
+    // DNI argentino puede usar "|" o "@"
+    const separador = text.includes("|") ? "|" : "@";
+    const partes = text.split(separador).map(p => p.trim());
 
-        setJugadoraEdit(prev => ({
-          ...prev,
-          name: `${nombre} ${apellido}`,
-          dni: dni,
-          birthDate: fechaNac
-        }));
-        mostrarAviso("DNI Escaneado correctamente");
-      }
-    } catch (e) {
-      mostrarAviso("Error al procesar formato DNI");
+    /**
+     * Formato habitual:
+     * 0: tipo documento
+     * 1: apellido
+     * 2: nombre
+     * 3: sexo
+     * 4: DNI
+     * 5: ejemplar
+     * 6: fecha nacimiento (YYYYMMDD)
+     */
+
+    const apellido = partes[1] || "";
+    const nombre = partes[2] || "";
+    const dni = partes[4] || "";
+    const fechaRaw = partes[6];
+
+    let fechaNacimiento = "";
+    if (fechaRaw && /^\d{8}$/.test(fechaRaw)) {
+      fechaNacimiento = `${fechaRaw.slice(6, 8)}/${fechaRaw.slice(4, 6)}/${fechaRaw.slice(0, 4)}`;
     }
-  };
+
+    if (!dni || !nombre) {
+      mostrarAviso("DNI leído pero incompleto");
+      return;
+    }
+
+    setJugadoraEdit(prev => ({
+      ...(prev || {}),
+      name: `${nombre} ${apellido}`.trim(),
+      dni,
+      birthDate: fechaNacimiento
+    }));
+
+    mostrarAviso("DNI leído correctamente");
+  } catch (error) {
+    console.error("Error procesando PDF417:", error);
+    mostrarAviso("No se pudo procesar el DNI");
+  }
+};
+
 
   const guardarJugadora = async (e) => {
     e.preventDefault();
