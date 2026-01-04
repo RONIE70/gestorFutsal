@@ -143,6 +143,10 @@ export default function App() {
   }
 };
 
+const detenerEscaneo = () => { 
+  if (scannerRef.current) { scannerRef.current.stop(); // ✅ NO reset 
+  scannerRef.current = null; }
+  setEscaneando(false); };
 
   /* ===================== ZXING SCANNER ===================== */
 
