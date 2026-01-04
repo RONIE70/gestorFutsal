@@ -111,8 +111,7 @@ export default function App() {
   if (!active) return;
 
   try {
-    console.log('escaneando frame');
-
+    console.log('🎥 Iniciando cámara PDF417...');
     const controls = await reader.decodeFromConstraints(
       {
         audio: false,
@@ -125,7 +124,10 @@ export default function App() {
       },
       'reader',
       (result) => {
+        console.log('📦 RESULTADO RAW:', result);
+    console.log('📄 TEXTO LEÍDO:', result.getText());
   if (!result) return;
+console.log('✅ Cámara inicializada, esperando códigos...');
 
   const texto = result.getText();
 
