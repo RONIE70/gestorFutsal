@@ -122,24 +122,54 @@ export default function App() {
     }
   };
 
-  const iniciarEscaneo = () => {
-    setEscaneando(true);
-    setTimeout(() => {
-      const html5QrCode = new window.Html5Qrcode("reader");
-      scannerRef.current = html5QrCode;
-      const config = { fps: 10, qrbox: { width: 250, height: 150 } };
-      
-      html5QrCode.start(
-        { facingMode: "environment" },
-        config,
-        (decodedText) => {
-          procesarDatosDNI(decodedText);
-          detenerEscaneo();
-        },
-        () => {}
-      );
-    }, 500);
-  };
+  // --- LÓGICA DE ESCÁNER PARA DNI ARGENTINO ---
+const iniciarEscaneo = () => {
+  if (!window.Html5Qrcode) {
+    aviso("Cargando lector...");
+    return;
+  }
+  setEscaneando(true);
+  setTimeout(() => {
+    const html5QrCode = new window.Html5Qrcode("reader");
+    scannerRef.current = html5QrCode;
+    html5QrCode.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: { width: 280, height: 120 } }, // Ajustado para el código largo del DNI
+      (text) => {
+        try {
+          // El DNI Argentino puede venir con "@" o con "|"
+          const delimitador = text.includes('|') ? '|' : '@';
+          const partes = text.split(delimitador);
+          
+          if (partes.length >= 7) {
+            // Posiciones estándar del DNI Argentino:
+            // 1: Apellido, 2: Nombre, 4: DNI, 6: Fecha Nacimiento
+            const apellido = partes[1].trim();
+            const nombre = partes[2].trim();
+            const dni = partes[4].trim();
+            const fechaNac = partes[6].trim();
+
+            setJugadoraEdit(prev => ({
+              ...prev,
+              name: `${nombre} ${apellido}`,
+              dni: dni,
+              birthDate: fechaNac
+            }));
+            
+            aviso("DNI Argentino Detectado");
+            detenerEscaneo();
+          }
+        } catch (e) { 
+          aviso("Error al leer los datos del DNI"); 
+        }
+      },
+      () => {}
+    ).catch(() => { 
+      setEscaneando(false); 
+      aviso("Error de cámara"); 
+    });
+  }, 500);
+};
 
   const detenerEscaneo = () => {
     if (scannerRef.current) {
