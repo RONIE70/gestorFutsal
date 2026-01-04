@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useRef, useRef } from 'react';
 import { initializeApp } from 'firebase/app';
+import { BrowserPDF417Reader } from '@zxing/browser';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { 
   getFirestore, 
@@ -15,7 +16,8 @@ import {
 } from 'firebase/firestore';
 
 // Librería para el escáner desde CDN
-const DYNAMSOFT_SCRIPT = "https://cdn.jsdelivr.net/npm/dynamsoft-javascript-barcode@9.6.40/dist/dbr.js";
+const [escaneando, setEscaneando] = useState(false);
+const scannerRef = useRef(null);
 
 
 // --- CONFIGURACIÓN DE FIREBASE ---
@@ -84,76 +86,71 @@ export default function App() {
 
   const scannerRef = useRef(null);
 
+    /* ===================== INIT FIREBASE ===================== */
+
   useEffect(() => {
-  const script = document.createElement("script");
-  script.src = DYNAMSOFT_SCRIPT;
-  script.async = true;
-  document.body.appendChild(script);
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const firestore = getFirestore(app);
+    setDb(firestore);
+    signInAnonymously(auth);
+    return onAuthStateChanged(auth, setUsuario);
+  }, []);
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const firestore = getFirestore(app);
-  setDb(firestore);
+  /* ===================== ZXING SCANNER ===================== */
 
-  signInAnonymously(auth);
-  return onAuthStateChanged(auth, setUsuario);
-}, []);
+  useEffect(() => {
+    if (!escaneando) return;
 
-useEffect(() => {
-  if (!escaneando) return;
+    const reader = new BrowserPDF417Reader();
+    scannerRef.current = reader;
 
-  const iniciarScannerReal = async () => {
-    if (!window.Dynamsoft?.DBR) {
-      mostrarAviso("Cargando lector de DNI...");
-      setEscaneando(false);
-      return;
-    }
-
-    try {
-      window.Dynamsoft.DBR.BarcodeReader.license =
-        "DLS2eyJoYW5kc2hha2VDb2RlIjoiMTA0Mjk2NTI3LVRYZ3VOMkdzSENPdjIxRzN6RzZ1IiwiaW5mbyI6ImRlbW8ifQ==";
-
-      const reader = await window.Dynamsoft.DBR.BarcodeReader.createInstance();
-      scannerRef.current = reader;
-
-      await reader.updateRuntimeSettings({
-        barcodeFormatIds: window.Dynamsoft.DBR.EnumBarcodeFormat.BF_PDF417,
-        expectedBarcodesCount: 1
-      });
-
-      reader.onUniqueRead = async (results) => {
-        if (!results || !results.length) return;
-
-        const rawText = results[0]?.barcodeText;
-        if (!rawText) return;
-
-        reader.onUniqueRead = null;
-        procesarPDF417DNI(rawText);
-        await detenerEscaneo();
-      };
-
-      // ⬅️ ACÁ el div YA EXISTE
-      await reader.decodeFromVideoDevice(undefined, "reader");
-
-    } catch (error) {
-      console.error("Error iniciando cámara:", error);
+    reader.decodeFromVideoDevice(
+      { facingMode: "environment" },
+      "reader",
+      (result, error, controls) => {
+        if (result) {
+          procesarPDF417DNI(result.getText());
+          controls.stop();
+          setEscaneando(false);
+        }
+      }
+    ).catch(() => {
       mostrarAviso("No se pudo acceder a la cámara");
-      await detenerEscaneo();
-    }
-  };
+      setEscaneando(false);
+    });
 
-  iniciarScannerReal();
+    return () => {
+      reader.reset();
+      scannerRef.current = null;
+    };
+  }, [escaneando]);
 
-  // cleanup de seguridad
-  return () => {
+  const detenerEscaneo = () => {
     if (scannerRef.current) {
-      scannerRef.current.stop();
-      scannerRef.current.destroy();
+      scannerRef.current.reset();
       scannerRef.current = null;
     }
+    setEscaneando(false);
   };
-}, [escaneando]);
 
+/* ===================== DNI PROCESS ===================== */
+
+  const procesarPDF417DNI = (text) => {
+    const sep = text.includes('|') ? '|' : '@';
+    const p = text.split(sep);
+
+    setJugadoraEdit(prev => ({
+      ...(prev || {}),
+      name: `${p[2] || ''} ${p[1] || ''}`.trim(),
+      dni: p[4] || '',
+      birthDate: p[6]
+        ? `${p[6].slice(6,8)}/${p[6].slice(4,6)}/${p[6].slice(0,4)}`
+        : ''
+    }));
+
+    mostrarAviso("DNI leído correctamente");
+  };
 
   useEffect(() => {
     if (!usuario || !db || !categoriaSel) return;
@@ -179,21 +176,6 @@ useEffect(() => {
     }
   };
 
- // --- ESCÁNER DNI ARGENTINO PDF417 (Dynamsoft) ---
-
-const detenerEscaneo = async () => {
-  try {
-    if (scannerRef.current) {
-      await scannerRef.current.stop();
-      scannerRef.current.destroy();
-      scannerRef.current = null;
-    }
-  } catch (e) {
-    console.warn("Error al detener cámara:", e);
-  } finally {
-    setEscaneando(false);
-  }
-};
 
   const guardarJugadora = async (e) => {
     e.preventDefault();
@@ -277,6 +259,7 @@ const detenerEscaneo = async () => {
             >
               📷 ESCANEAR BARRAS DNI
             </button>
+
             
             <div className="space-y-1">
               <label className="text-[10px] font-black text-slate-400 uppercase ml-2">Foto DNI (Frente/Dorso)</label>
