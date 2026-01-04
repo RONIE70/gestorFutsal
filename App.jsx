@@ -352,11 +352,15 @@ export default function App() {
       {escaneando && (
         <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center p-6">
           <h2 className="text-white font-black uppercase tracking-widest text-xs mb-4 italic">Enfoca el Código de Barras</h2>
-          <div
-              id="reader"
-              className="w-full max-w-sm rounded-3xl border-4 border-indigo-600 shadow-2xl bg-black"
-              style={{ height: '260px' }}
-            />
+          <video
+  id="reader"
+  className="w-full max-w-sm rounded-3xl border-4 border-indigo-600 shadow-2xl bg-black object-cover"
+  style={{ height: '260px' }}
+  autoPlay
+  muted
+  playsInline
+/>
+
             <button onClick={detenerEscaneo} className="mt-8 bg-white text-black px-10 py-4 rounded-full font-black uppercase text-[10px] tracking-widest">Cancelar</button>
           </div>
       )}
