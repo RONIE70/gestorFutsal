@@ -123,13 +123,18 @@ export default function App() {
         }
       },
       'reader',
-      (result) => {
-        console.log('📦 RESULTADO RAW:', result);
-    console.log('📄 TEXTO LEÍDO:', result.getText());
-  if (!result) return;
-console.log('✅ Cámara inicializada, esperando códigos...');
+      (result, err) => {
+  if (!result) {
+    if (err && err.name !== 'NotFoundException') {
+      console.warn('⚠️ ZXing error:', err.name);
+    }
+    return;
+  }
+
+  console.log('📦 RESULTADO RAW:', result);
 
   const texto = result.getText();
+  console.log('📄 TEXTO LEÍDO:', texto);
 
   if (texto === ultimoTexto) {
     lecturasIguales++;
@@ -138,12 +143,14 @@ console.log('✅ Cámara inicializada, esperando códigos...');
     lecturasIguales = 1;
   }
 
-  // requerimos 2 lecturas iguales seguidas
+  console.log('🔁 Coincidencias:', lecturasIguales);
+
   if (lecturasIguales >= 2) {
     procesarPDF417DNI(texto);
     detenerEscaneo();
   }
 }
+
 
     );
 
