@@ -97,39 +97,52 @@ export default function App() {
   /* ===================== ZXING SCANNER ===================== */
 
   useEffect(() => {
-    if (!escaneando) return;
+  if (!escaneando) return;
 
-    const reader = new BrowserPDF417Reader();
-    scannerRef.current = reader;
+  let active = true;
+  const reader = new BrowserPDF417Reader();
+  scannerRef.current = reader;
 
-    reader.decodeFromVideoDevice(
-      { facingMode: "environment" },
-      "reader",
-      (result, error, controls) => {
-        if (result) {
-          procesarPDF417DNI(result.getText());
-          controls.stop();
-          setEscaneando(false);
+  const iniciarCamara = async () => {
+    await new Promise(res => setTimeout(res, 300)); // ⬅️ CLAVE
+
+    if (!active) return;
+
+    try {
+      await reader.decodeFromVideoDevice(
+        undefined,
+        'reader',
+        (result) => {
+          if (result) {
+            procesarPDF417DNI(result.getText());
+            detenerEscaneo();
+          }
         }
-      }
-    ).catch(() => {
-      mostrarAviso("No se pudo acceder a la cámara");
-      setEscaneando(false);
-    });
+      );
+    } catch (e) {
+      mostrarAviso('No se pudo abrir la cámara');
+      detenerEscaneo();
+    }
+  };
 
-    return () => {
-      reader.reset();
-      scannerRef.current = null;
-    };
-  }, [escaneando]);
+  iniciarCamara();
+
+  return () => {
+    active = false;
+    reader.reset();
+    scannerRef.current = null;
+  };
+}, [escaneando]);
+
 
   const detenerEscaneo = () => {
-    if (scannerRef.current) {
-      scannerRef.current.reset();
-      scannerRef.current = null;
-    }
-    setEscaneando(false);
-  };
+  if (scannerRef.current) {
+    scannerRef.current.reset();
+    scannerRef.current = null;
+  }
+  setEscaneando(false);
+};
+
 
 /* ===================== DNI PROCESS ===================== */
 
