@@ -190,7 +190,7 @@ const detenerEscaneo = () => {
 /* ===================== DNI PROCESS ===================== */
 
   const procesarPDF417DNI = (text) => {
-    console.log('📦 Texto recibido PDF417:', texto);
+    console.log('📦 Texto recibido PDF417:', text);
 
   const datos = parsearDNIArgentino(text);
 
@@ -204,7 +204,6 @@ const detenerEscaneo = () => {
   // 👉 Acá podés guardar en estado, enviar a Firebase, etc.
   // setDniData(datos);
 };
-  };
 
   useEffect(() => {
     if (!usuario || !db || !categoriaSel) return;
