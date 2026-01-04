@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { initializeApp } from 'firebase/app';
 import { BrowserPDF417Reader } from '@zxing/browser';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
