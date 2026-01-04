@@ -95,6 +95,9 @@ export default function App() {
   }, []);
 
   /* ===================== ZXING SCANNER ===================== */
+  let ultimoTexto = null;
+  let lecturasIguales = 0;
+
 
   useEffect(() => {
   if (!escaneando) return;
@@ -122,11 +125,24 @@ export default function App() {
       },
       'reader',
       (result) => {
-        if (result) {
-          procesarPDF417DNI(result.getText());
-          detenerEscaneo();
-        }
-      }
+  if (!result) return;
+
+  const texto = result.getText();
+
+  if (texto === ultimoTexto) {
+    lecturasIguales++;
+  } else {
+    ultimoTexto = texto;
+    lecturasIguales = 1;
+  }
+
+  // requerimos 2 lecturas iguales seguidas
+  if (lecturasIguales >= 2) {
+    procesarPDF417DNI(texto);
+    detenerEscaneo();
+  }
+}
+
     );
 
     // ✅ guardar controls para poder detener la cámara después
