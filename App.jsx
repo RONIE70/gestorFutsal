@@ -104,11 +104,19 @@ export default function App() {
   const iniciarCamara = async () => {
   if (!readerRef.current) return;
 
-  console.log('🎥 Iniciando cámara PDF417');
+  console.log('🎥 Iniciando cámara PDF417 (constraints)');
 
   try {
-    const controls = await readerRef.current.decodeFromVideoDevice(
-      undefined,
+    const controls = await readerRef.current.decodeFromConstraints(
+      {
+        audio: false,
+        video: {
+          facingMode: { ideal: 'environment' },
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+          // focusMode NO es estándar, algunos browsers lo ignoran
+        }
+      },
       'reader',
       (result) => {
         if (!result) return;
@@ -142,6 +150,7 @@ export default function App() {
     detenerEscaneo();
   }
 };
+
 
 const detenerEscaneo = () => { 
   if (scannerRef.current) { scannerRef.current.stop(); // ✅ NO reset 
@@ -383,7 +392,7 @@ const detenerEscaneo = () => {
           <video
   id="reader"
   className="w-full max-w-md rounded-3xl border-4 border-indigo-600 shadow-2xl bg-black object-cover"
-  style={{ height: '360px' }}
+  style={{ height: '280px' }}
   autoPlay
   muted
   playsInline
