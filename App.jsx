@@ -105,59 +105,23 @@ export default function App() {
   let active = true;
   const reader = new BrowserPDF417Reader();
 
-  const iniciarCamara = async () => {
-  if (!active) return;
+  useEffect(() => {
+  if (!escaneando) return;
 
-  const video = document.getElementById('reader');
+  let active = true;
+  const reader = new BrowserPDF417Reader();
 
-  if (!video) {
-    console.warn('❌ Video no existe todavía');
-    return;
-  }
+  requestAnimationFrame(iniciarCamara);
 
-  console.log('🎥 Esperando video metadata...');
-
-  video.onloadedmetadata = async () => {
-    try {
-      console.log('✅ Video listo, iniciando ZXing...');
-
-      const controls = await reader.decodeFromVideoElement(
-        video,
-        (result, err) => {
-          if (!result) return;
-
-          console.log('📦 RESULTADO RAW:', result);
-
-          const texto = result.getText();
-          console.log('📄 TEXTO LEÍDO:', texto);
-
-          if (texto === ultimoTextoRef.current) {
-            lecturasIgualesRef.current++;
-          } else {
-            ultimoTextoRef.current = texto;
-            lecturasIgualesRef.current = 1;
-          }
-
-          console.log('🔁 Coincidencias:', lecturasIgualesRef.current);
-
-          if (lecturasIgualesRef.current >= 2) {
-            procesarPDF417DNI(texto);
-            detenerEscaneo();
-          }
-        }
-      );
-
-      scannerRef.current = controls;
-
-      console.log('📡 ZXing escuchando frames');
-
-    } catch (e) {
-      console.error('❌ Error ZXing:', e);
-      mostrarAviso('No se pudo iniciar el escáner');
-      detenerEscaneo();
+  return () => {
+    active = false;
+    if (scannerRef.current) {
+      scannerRef.current.stop();
+      scannerRef.current = null;
     }
   };
-};
+}, [escaneando]);
+
 
 
 
