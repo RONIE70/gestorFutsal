@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { initializeApp } from 'firebase/app';
-import { getAnalytics } from "firebase/analytics";
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { 
   getFirestore, 
@@ -15,7 +14,8 @@ import {
   where
 } from 'firebase/firestore';
 
-// --- PEGA TUS DATOS DE FIREBASE AQUÍ ---
+// --- CONFIGURACIÓN DE FIREBASE ---
+// Estos son los valores de tu proyecto actual
 const firebaseConfig = {
   apiKey: "AIzaSyD5xSfvGA86x4Ekc2LsSuUz7f1hpQh7jwg",
   authDomain: "futsal-pro-9de3a.firebaseapp.com",
@@ -25,10 +25,6 @@ const firebaseConfig = {
   appId: "1:424044829956:web:b3f348f2d8afd2859f8451",
   measurementId: "G-Z97DHMX05S"
 };
-
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-
 
 // --- CONSTANTES ---
 const CATEGORIAS_EQUIPO = [
@@ -79,16 +75,21 @@ export default function App() {
   const [pestanaRegistro, setPestanaRegistro] = useState('asistencia');
   const [mensaje, setMensaje] = useState(null);
   const [fotoDniBase64, setFotoDniBase64] = useState(null);
-  const [libreriaLista, setLibreriaLista] = useState(false);
+  const [libreriaEscanerCargada, setLibreriaEscanerCargada] = useState(false);
 
   const scannerRef = useRef(null);
 
   useEffect(() => {
-    // Carga de la librería Html5Qrcode desde CDN para evitar errores de resolución de módulos
-    const script = document.createElement("script");
-    script.src = "https://unpkg.com/html5-qrcode";
-    script.onload = () => setLibreriaLista(true);
-    document.body.appendChild(script);
+    // Carga dinámica de la librería del escáner para evitar errores de compilación local
+    if (!window.Html5Qrcode) {
+        const script = document.createElement("script");
+        script.src = "https://unpkg.com/html5-qrcode";
+        script.async = true;
+        script.onload = () => setLibreriaEscanerCargada(true);
+        document.body.appendChild(script);
+    } else {
+        setLibreriaEscanerCargada(true);
+    }
 
     // Inicialización de Firebase
     const app = initializeApp(firebaseConfig);
@@ -124,10 +125,10 @@ export default function App() {
     }
   };
 
-  const iniciarEscaneo = async () => {
-    if (!libreriaLista || !window.Html5Qrcode) {
-      mostrarAviso("Cargando escáner, espera un momento...");
-      return;
+  const iniciarEscaneo = () => {
+    if (!window.Html5Qrcode) {
+        mostrarAviso("Cargando lector... intenta de nuevo en un segundo.");
+        return;
     }
 
     setEscaneando(true);
@@ -237,7 +238,7 @@ export default function App() {
     } catch (e) { console.error(e); }
   };
 
-  if (!usuario) return <div className="flex h-screen items-center justify-center font-black text-indigo-600">CONECTANDO A BASE DE DATOS...</div>;
+  if (!usuario) return <div className="flex h-screen items-center justify-center font-black text-indigo-600 bg-slate-100">CONECTANDO A BASE DE DATOS...</div>;
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900 font-sans">
@@ -262,42 +263,42 @@ export default function App() {
               <button onClick={() => { setMostrarForm(false); setJugadoraEdit(null); setFotoDniBase64(null); }} className="text-2xl font-bold">×</button>
             </div>
             <form onSubmit={guardarJugadora} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
-              <button type="button" onClick={iniciarEscaneo} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase text-[10px] flex items-center justify-center gap-2">
+              <button type="button" onClick={iniciarEscaneo} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase text-[10px] flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all">
                 📷 ESCANEAR DNI
               </button>
               
               <div className="space-y-1">
-                <label className="text-[10px] font-black text-slate-400 uppercase">Foto DNI</label>
+                <label className="text-[10px] font-black text-slate-400 uppercase ml-2">Foto DNI</label>
                 <input type="file" accept="image/*" capture="environment" onChange={handleFotoDni} className="hidden" id="foto-dni-input" />
-                <label htmlFor="foto-dni-input" className="w-full bg-slate-100 p-4 rounded-2xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center cursor-pointer">
+                <label htmlFor="foto-dni-input" className="w-full bg-slate-100 p-4 rounded-2xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-200 transition">
                   {fotoDniBase64 || jugadoraEdit?.fotoDni ? (
-                    <img src={fotoDniBase64 || jugadoraEdit?.fotoDni} alt="DNI" className="h-24 rounded-lg" />
+                    <img src={fotoDniBase64 || jugadoraEdit?.fotoDni} alt="DNI" className="h-24 rounded-lg shadow-sm" />
                   ) : (
-                    <span className="text-[10px] font-black text-slate-500">TAP PARA FOTO DNI</span>
+                    <span className="text-[10px] font-black text-slate-500 uppercase">Toca para capturar foto</span>
                   )}
                 </label>
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] font-black text-slate-400 uppercase">Nombre Completo</label>
-                <input name="nombre" defaultValue={jugadoraEdit?.name} required className="w-full bg-slate-100 p-4 rounded-2xl font-bold" />
+                <label className="text-[10px] font-black text-slate-400 uppercase ml-2">Nombre Completo</label>
+                <input name="nombre" defaultValue={jugadoraEdit?.name} required className="w-full bg-slate-100 p-4 rounded-2xl border-none font-bold shadow-inner" />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <input name="dni" placeholder="DNI" defaultValue={jugadoraEdit?.dni} required className="bg-slate-100 p-4 rounded-2xl font-bold" />
-                <input name="fecha" placeholder="Nacimiento" defaultValue={jugadoraEdit?.birthDate} className="bg-slate-100 p-4 rounded-2xl font-bold" />
+                <input name="dni" placeholder="DNI" defaultValue={jugadoraEdit?.dni} required className="bg-slate-100 p-4 rounded-2xl border-none font-bold shadow-inner" />
+                <input name="fecha" placeholder="Nacimiento" defaultValue={jugadoraEdit?.birthDate} className="bg-slate-100 p-4 rounded-2xl border-none font-bold shadow-inner" />
               </div>
 
-              <input name="telefono" placeholder="Teléfono" defaultValue={jugadoraEdit?.telefono} className="w-full bg-slate-100 p-4 rounded-2xl font-bold" />
-              <input name="direccion" placeholder="Dirección" defaultValue={jugadoraEdit?.direccion} className="w-full bg-slate-100 p-4 rounded-2xl font-bold" />
-              <input name="escuela" placeholder="Escuela" defaultValue={jugadoraEdit?.escuela} className="w-full bg-slate-100 p-4 rounded-2xl font-bold" />
+              <input name="telefono" placeholder="Teléfono" defaultValue={jugadoraEdit?.telefono} className="w-full bg-slate-100 p-4 rounded-2xl border-none font-bold shadow-inner" />
+              <input name="direccion" placeholder="Dirección" defaultValue={jugadoraEdit?.direccion} className="w-full bg-slate-100 p-4 rounded-2xl border-none font-bold shadow-inner" />
+              <input name="escuela" placeholder="Escuela" defaultValue={jugadoraEdit?.escuela} className="w-full bg-slate-100 p-4 rounded-2xl border-none font-bold shadow-inner" />
               
               <div className="grid grid-cols-2 gap-3">
-                <input name="nombrePadre" placeholder="Padre" defaultValue={jugadoraEdit?.nombrePadre} className="bg-slate-100 p-4 rounded-2xl font-bold text-sm" />
-                <input name="nombreMadre" placeholder="Madre" defaultValue={jugadoraEdit?.nombreMadre} className="bg-slate-100 p-4 rounded-2xl font-bold text-sm" />
+                <input name="nombrePadre" placeholder="Padre" defaultValue={jugadoraEdit?.nombrePadre} className="bg-slate-100 p-4 rounded-2xl border-none font-bold text-sm shadow-inner" />
+                <input name="nombreMadre" placeholder="Madre" defaultValue={jugadoraEdit?.nombreMadre} className="bg-slate-100 p-4 rounded-2xl border-none font-bold text-sm shadow-inner" />
               </div>
 
-              <button type="submit" className="w-full bg-green-600 text-white py-5 rounded-2xl font-black uppercase text-xs">
+              <button type="submit" className="w-full bg-green-600 text-white py-5 rounded-2xl font-black uppercase text-xs shadow-xl active:scale-95 transition-all">
                 {jugadoraEdit ? 'ACTUALIZAR FICHA' : 'CREAR JUGADORA'}
               </button>
             </form>
@@ -308,14 +309,15 @@ export default function App() {
       {vista === 'inicio' && (
         <div className="p-6 max-w-lg mx-auto">
           <header className="py-12 text-center">
-            <h1 className="text-5xl font-black text-slate-950 italic tracking-tighter mb-2">FUTSAL FEM</h1>
-            <p className="text-slate-400 font-bold uppercase text-[9px]">Selecciona Categoría</p>
+            <h1 className="text-5xl font-black text-slate-950 italic tracking-tighter leading-none mb-2">FUTSAL FEM</h1>
+            <div className="h-1.5 w-16 bg-indigo-600 mx-auto rounded-full mb-4 shadow-sm"></div>
+            <p className="text-slate-400 font-bold uppercase text-[9px] tracking-[0.3em]">Gestión Deportiva Pro</p>
           </header>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {CATEGORIAS_EQUIPO.map(cat => (
-              <button key={cat.id} onClick={() => { setCategoriaSel(cat); setVista('categoria'); }} className={`${cat.color} h-36 rounded-[40px] shadow-lg text-white flex flex-col items-center justify-center active:scale-95 border-b-8 border-black/20`}>
-                <span className="text-2xl font-black">{cat.nombre}</span>
-                <span className="text-[10px] font-bold opacity-70">{cat.edades}</span>
+              <button key={cat.id} onClick={() => { setCategoriaSel(cat); setVista('categoria'); }} className={`${cat.color} h-36 rounded-[40px] shadow-lg text-white flex flex-col items-center justify-center active:scale-95 transition-all border-b-8 border-black/20`}>
+                <span className="text-2xl font-black uppercase tracking-tighter">{cat.nombre}</span>
+                <span className="text-[10px] font-bold opacity-70 uppercase tracking-widest">{cat.edades}</span>
               </button>
             ))}
           </div>
@@ -325,37 +327,46 @@ export default function App() {
       {vista === 'categoria' && (
         <div className="flex flex-col h-screen">
           <header className={`${categoriaSel.color} p-6 text-white shadow-xl flex justify-between items-center rounded-b-[48px] z-10 sticky top-0`}>
-            <button onClick={() => setVista('inicio')} className="bg-white/20 p-3 rounded-2xl">
+            <button onClick={() => setVista('inicio')} className="bg-white/20 p-3 rounded-2xl active:scale-90">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7" /></svg>
             </button>
-            <h2 className="text-xl font-black uppercase">{categoriaSel.nombre}</h2>
-            <button onClick={() => { setJugadoraEdit(null); setMostrarForm(true); }} className="bg-white text-slate-900 px-5 py-2.5 rounded-2xl font-black text-[10px]">
+            <div className="text-center">
+              <h2 className="text-xl font-black uppercase tracking-widest leading-none mb-1">{categoriaSel.nombre}</h2>
+              <span className="text-[9px] font-black opacity-60 bg-black/10 px-2 py-0.5 rounded-full uppercase">{categoriaSel.edades}</span>
+            </div>
+            <button onClick={() => { setJugadoraEdit(null); setMostrarForm(true); }} className="bg-white text-slate-900 px-5 py-2.5 rounded-2xl font-black text-[10px] shadow-xl active:scale-90 tracking-widest">
               AGREGA
             </button>
           </header>
 
           <div className="flex-grow p-6 overflow-y-auto space-y-4 pb-36">
-            {jugadoras.map(p => (
-              <div key={p.id} className="bg-white p-5 rounded-[32px] shadow-md border border-slate-200 flex justify-between items-center transition-all hover:border-indigo-300">
-                <div className="flex-grow flex items-center gap-4" onClick={() => { setJugadoraSeleccionada(p); setVista('detalle_jugadora'); }}>
-                  <div className="w-12 h-12 bg-slate-100 rounded-full overflow-hidden flex items-center justify-center border border-slate-200">
-                    {p.fotoDni ? <img src={p.fotoDni} className="w-full h-full object-cover" alt="jugadora" /> : <span>👤</span>}
-                  </div>
-                  <div>
-                    <p className="text-lg font-black text-slate-800 uppercase tracking-tighter leading-none mb-1">{p.name}</p>
-                    <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">ID: {p.dni}</p>
-                  </div>
-                </div>
-                <div className="flex gap-2 ml-4">
-                  <button onClick={() => { setJugadoraEdit(p); setMostrarForm(true); }} className="p-3 bg-slate-100 rounded-xl text-slate-400 active:bg-indigo-100 active:text-indigo-600 transition-all">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                  </button>
-                  <button onClick={() => eliminarJugadora(p.id)} className="p-3 bg-red-50 rounded-xl text-red-400 active:bg-red-100 transition-all">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                  </button>
-                </div>
+            {jugadoras.length === 0 ? (
+              <div className="text-center py-20 text-slate-300">
+                <p className="font-black uppercase tracking-widest text-[10px] italic">Sin atletas registradas</p>
               </div>
-            ))}
+            ) : (
+              jugadoras.map(p => (
+                <div key={p.id} className="bg-white p-5 rounded-[32px] shadow-md border border-slate-200 flex justify-between items-center transition-all hover:border-indigo-300">
+                  <div className="flex-grow flex items-center gap-4" onClick={() => { setJugadoraSeleccionada(p); setVista('detalle_jugadora'); }}>
+                    <div className="w-12 h-12 bg-slate-100 rounded-full overflow-hidden flex items-center justify-center border border-slate-200">
+                      {p.fotoDni ? <img src={p.fotoDni} className="w-full h-full object-cover" alt="foto" /> : <span className="text-xs">👤</span>}
+                    </div>
+                    <div>
+                      <p className="text-lg font-black text-slate-800 uppercase tracking-tighter leading-none mb-1">{p.name}</p>
+                      <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">ID: {p.dni}</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 ml-4">
+                    <button onClick={() => { setJugadoraEdit(p); setMostrarForm(true); }} className="p-3 bg-slate-100 rounded-xl text-slate-400 active:bg-indigo-100 active:text-indigo-600 transition-all">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                    </button>
+                    <button onClick={() => eliminarJugadora(p.id)} className="p-3 bg-red-50 rounded-xl text-red-400 active:bg-red-100 transition-all">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
 
           <footer className="bg-slate-950 p-4 grid grid-cols-4 gap-2 fixed bottom-0 left-0 right-0 border-t border-white/10 rounded-t-[48px] shadow-2xl z-40">
@@ -438,14 +449,14 @@ export default function App() {
           <div className="p-4 space-y-6 pb-20 overflow-y-auto flex-grow">
             <div className="bg-white p-8 rounded-[48px] shadow-xl border border-slate-100 flex flex-col items-center text-center">
               <div className="w-32 h-32 bg-indigo-50 rounded-full flex items-center justify-center text-6xl border-4 border-white shadow-xl overflow-hidden mb-4">
-                {jugadoraSeleccionada.fotoDni ? <img src={jugadoraSeleccionada.fotoDni} className="w-full h-full object-cover" alt="foto dni" /> : "👤"}
+                {jugadoraSeleccionada.fotoDni ? <img src={jugadoraSeleccionada.fotoDni} className="w-full h-full object-cover" alt="jugadora" /> : "👤"}
               </div>
               <h3 className="text-3xl font-black text-slate-900 uppercase tracking-tighter leading-none mb-1">{jugadoraSeleccionada.name}</h3>
               <p className="text-indigo-600 font-black text-[10px] uppercase tracking-[0.4em] mb-6">DNI: {jugadoraSeleccionada.dni || 'PENDIENTE'}</p>
               
               <div className="flex gap-4 w-full">
-                <button onClick={() => { setJugadoraEdit(jugadoraSeleccionada); setMostrarForm(true); }} className="flex-1 bg-slate-100 text-slate-700 py-3 rounded-2xl font-black uppercase text-[10px] shadow-sm">Editar</button>
-                <button onClick={() => eliminarJugadora(jugadoraSeleccionada.id)} className="flex-1 bg-red-50 text-red-600 py-3 rounded-2xl font-black uppercase text-[10px] shadow-sm">Eliminar</button>
+                <button onClick={() => { setJugadoraEdit(jugadoraSeleccionada); setMostrarForm(true); }} className="flex-1 bg-slate-100 text-slate-700 py-3 rounded-2xl font-black uppercase text-[10px] shadow-sm active:scale-95 transition-all">Editar</button>
+                <button onClick={() => eliminarJugadora(jugadoraSeleccionada.id)} className="flex-1 bg-red-50 text-red-600 py-3 rounded-2xl font-black uppercase text-[10px] shadow-sm active:scale-95 transition-all">Eliminar</button>
               </div>
             </div>
 
