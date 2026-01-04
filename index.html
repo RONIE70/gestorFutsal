@@ -2,15 +2,18 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Gestor Futsal Pro - nc-s1125</title>
-    <!-- Cargamos la librería del escáner por CDN para asegurar compatibilidad -->
+    <title>Gestor Futsal Pro</title>
+    <!-- ESTA LÍNEA ACTIVA LOS ESTILOS AUTOMÁTICAMENTE -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+      body { font-family: 'Inter', sans-serif; }
+    </style>
   </head>
   <body class="bg-slate-100">
     <div id="root"></div>
-    <!-- Script de entrada para Vite -->
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
