@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { initializeApp } from 'firebase/app';
 import { BrowserPDF417Reader } from '@zxing/browser';
+import { parsearDNIArgentino } from './utils/parsearDNIArgentino';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { 
   getFirestore, 
@@ -189,19 +190,20 @@ const detenerEscaneo = () => {
 /* ===================== DNI PROCESS ===================== */
 
   const procesarPDF417DNI = (text) => {
-    const sep = text.includes('|') ? '|' : '@';
-    const p = text.split(sep);
+    console.log('📦 Texto recibido PDF417:', texto);
 
-    setJugadoraEdit(prev => ({
-      ...(prev || {}),
-      name: `${p[2] || ''} ${p[1] || ''}`.trim(),
-      dni: p[4] || '',
-      birthDate: p[6]
-        ? `${p[6].slice(6,8)}/${p[6].slice(4,6)}/${p[6].slice(0,4)}`
-        : ''
-    }));
+  const datos = parsearDNIArgentino(text);
 
-    mostrarAviso("DNI leído correctamente");
+  if (!datos) {
+    mostrarAviso('No se pudo leer el DNI');
+    return;
+  }
+
+  console.log('✅ DNI PARSEADO:', datos);
+
+  // 👉 Acá podés guardar en estado, enviar a Firebase, etc.
+  // setDniData(datos);
+};
   };
 
   useEffect(() => {
