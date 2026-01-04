@@ -96,7 +96,7 @@ export default function App() {
 
   /* ===================== ZXING SCANNER ===================== */
   const ultimoTextoRef = useRef(null);
-const lecturasIgualesRef = useRef(0);
+  const lecturasIgualesRef = useRef(0);
 
 
   useEffect(() => {
@@ -106,67 +106,62 @@ const lecturasIgualesRef = useRef(0);
   const reader = new BrowserPDF417Reader();
 
   const iniciarCamara = async () => {
-  await new Promise(res => setTimeout(res, 300));
-
   if (!active) return;
 
-  try {
-    console.log('🎥 Iniciando cámara PDF417...');
-    const controls = await reader.decodeFromConstraints(
-      {
-        audio: false,
-        video: {
-          facingMode: { ideal: 'environment' }, // cámara trasera
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-          // focusMode NO se fuerza porque no está soportado en todos los browsers
-        }
-      },
-      'reader',
-      (result, err) => {
-  if (!result) {
-    if (err && err.name !== 'NotFoundException') {
-      // Ignoramos errores normales de ZXing (son por frame)
-    }
+  const video = document.getElementById('reader');
+
+  if (!video) {
+    console.warn('❌ Video no existe todavía');
     return;
   }
 
-  console.log('📦 RESULTADO RAW:', result);
+  console.log('🎥 Esperando video metadata...');
 
-  const texto = result.getText();
-  console.log('📄 TEXTO LEÍDO:', texto);
+  video.onloadedmetadata = async () => {
+    try {
+      console.log('✅ Video listo, iniciando ZXing...');
 
-  if (texto === ultimoTextoRef.current) {
-  lecturasIgualesRef.current++;
-} else {
-  ultimoTextoRef.current = texto;
-  lecturasIgualesRef.current = 1;
-}
+      const controls = await reader.decodeFromVideoElement(
+        video,
+        (result, err) => {
+          if (!result) return;
 
-console.log('🔁 Coincidencias:', lecturasIgualesRef.current);
+          console.log('📦 RESULTADO RAW:', result);
 
-if (lecturasIgualesRef.current >= 2) {
-  procesarPDF417DNI(texto);
-  detenerEscaneo();
-}
+          const texto = result.getText();
+          console.log('📄 TEXTO LEÍDO:', texto);
 
-}
+          if (texto === ultimoTextoRef.current) {
+            lecturasIgualesRef.current++;
+          } else {
+            ultimoTextoRef.current = texto;
+            lecturasIgualesRef.current = 1;
+          }
 
+          console.log('🔁 Coincidencias:', lecturasIgualesRef.current);
 
-    );
+          if (lecturasIgualesRef.current >= 2) {
+            procesarPDF417DNI(texto);
+            detenerEscaneo();
+          }
+        }
+      );
 
-    // ✅ guardar controls para poder detener la cámara después
-    scannerRef.current = controls;
+      scannerRef.current = controls;
 
-  } catch (e) {
-    console.error('Error cámara:', e);
-    mostrarAviso('No se pudo abrir la cámara');
-    detenerEscaneo();
-  }
+      console.log('📡 ZXing escuchando frames');
+
+    } catch (e) {
+      console.error('❌ Error ZXing:', e);
+      mostrarAviso('No se pudo iniciar el escáner');
+      detenerEscaneo();
+    }
+  };
 };
 
 
-  iniciarCamara();
+
+  requestAnimationFrame(iniciarCamara);
 
   return () => {
     active = false;
