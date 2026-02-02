@@ -247,7 +247,17 @@ const detenerEscaneo = () => {
       fotoDni: fotoDniBase64 || jugadoraEdit?.fotoDni || '',
       activities: jugadoraEdit?.activities || { attendance: [], matches: [], drills: [], payments: [] },
       data: { dni: formData.get('dni'), health: formData.get('health') || '' },
-      stats: jugadoraEdit?.stats || { behavior: 5, theory: 5 }
+      stats: jugadoraEdit?.stats || { behavior: 5, theory: 5 },
+      salud_profunda: {
+      patologias: formData.get('patologias'),
+      alergias: formData.get('alergias'),
+      medicacion: formData.get('medicacion'),
+      obraSocial: formData.get('obraSocial'),
+      contactoEmergencia: formData.get('contactoEmergencia'),
+      telEmergencia: formData.get('telEmergencia'),
+      grupoSanguineo: formData.get('grupoSanguineo'),
+    },
+      
     };
 
     try {
@@ -271,17 +281,32 @@ const detenerEscaneo = () => {
     if (!db || !usuario) return;
     const path = `players`;
     const ref = doc(db, path, jugadoraId);
+
+    // Capturamos el momento exacto del registro
+    const ahora = new Date();
+    
+    // Formateamos para Argentina
+    const fechaFormateada = ahora.toLocaleDateString('es-AR'); 
+    const horaFormateada = ahora.toLocaleTimeString('es-AR', { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
+    const diaSemana = ahora.toLocaleDateString('es-AR', { weekday: 'long' });
+
     try {
       await updateDoc(ref, {
         [`activities.${tipo}`]: arrayUnion({
           ...datos,
-          fechaMs: Date.now(),
-          fechaTexto: new Date().toLocaleDateString()
+          fechaMs: Date.now(), // Para poder ordenar cronológicamente
+          fechaTexto: fechaFormateada,
+          hora: horaFormateada,
+          diaSemana: diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1) // Capitaliza el día
         })
       });
-      mostrarAviso("Registro guardado");
+      mostrarAviso(`${datos.etiqueta} registrado`);
     } catch (e) {
       console.error(e);
+      mostrarAviso("Error al guardar registro");
     }
   };
 
@@ -599,11 +624,55 @@ const detenerEscaneo = () => {
             </section>
 
             <section className="space-y-3">
-               <h4 className="text-[10px] font-black text-slate-500 uppercase ml-4 tracking-[0.2em]">Salud / Alergias</h4>
+               <div className="space-y-1">
+    <label className="text-[9px] font-black text-slate-400 uppercase ml-2">Medicación Actual</label>
+    <input name="medicacion" placeholder="¿Toma algo regularmente?" defaultValue={jugadoraEdit?.salud_profunda?.medicacion} className="w-full bg-white p-3 rounded-xl border-none font-bold text-sm" />
+  </div>
+
+  <div className="grid grid-cols-2 gap-3 border-t border-rose-200 pt-3">
+    <div className="space-y-1">
+      <label className="text-[9px] font-black text-rose-500 uppercase ml-2">Aviso Emergencia (Nombre)</label>
+      <input name="contactoEmergencia" placeholder="Nombre contacto" defaultValue={jugadoraEdit?.salud_profunda?.contactoEmergencia} className="w-full bg-white p-3 rounded-xl border-none font-bold text-sm" />
+    </div>
+    <div className="space-y-1">
+      <label className="text-[9px] font-black text-rose-500 uppercase ml-2">Tel. Emergencia</label>
+      <input name="telEmergencia" placeholder="Teléfono" defaultValue={jugadoraEdit?.salud_profunda?.telEmergencia} className="w-full bg-white p-3 rounded-xl border-none font-bold text-sm" />
+    </div>
+  </div>
                <div className="bg-slate-900 p-6 rounded-[32px] text-white shadow-xl italic text-sm">
                   {jugadoraSeleccionada.data?.health || "Sin observaciones médicas registradas."}
                </div>
             </section>
+            <section className="space-y-3 pb-10">
+    <h4 className="text-[10px] font-black text-slate-500 uppercase ml-4 tracking-[0.2em]">Historial de Entrenamientos</h4>
+    <div className="bg-white rounded-[32px] border border-slate-200 overflow-hidden shadow-sm">
+      {!jugadoraSeleccionada.activities?.attendance || jugadoraSeleccionada.activities.attendance.length === 0 ? (
+        <div className="p-6 text-center text-slate-400 text-[10px] font-bold uppercase italic">Sin asistencias registradas</div>
+      ) : (
+        <div className="divide-y divide-slate-50">
+          {/* Ordenamos por fecha más reciente primero */}
+          {[...jugadoraSeleccionada.activities.attendance]
+            .sort((a, b) => b.fechaMs - a.fechaMs)
+            .map((asist, idx) => (
+              <div key={idx} className="p-4 flex justify-between items-center hover:bg-slate-50">
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-black text-slate-900 uppercase">{asist.diaSemana}</span>
+                  <span className="text-[12px] font-bold text-slate-500">{asist.fechaTexto}</span>
+                </div>
+                <div className="flex flex-col items-end">
+                  <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase text-white ${
+                    asist.status === 'presente' ? 'bg-green-500' : 'bg-slate-400'
+                  }`}>
+                    {asist.etiqueta}
+                  </span>
+                  <span className="text-[9px] font-bold text-slate-400 mt-1">{asist.hora} hs</span>
+                </div>
+              </div>
+            ))}
+        </div>
+      )}
+    </div>
+</section>
           </div>
         </div>
       )}
