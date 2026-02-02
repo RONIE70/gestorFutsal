@@ -627,12 +627,7 @@ const detenerEscaneo = () => {
                </div>
             </section>
 
-            <section className="space-y-3">
-               <div className="space-y-1">
-    <label className="text-[9px] font-black text-slate-400 uppercase ml-2">Medicación Actual</label>
-    <input name="medicacion" placeholder="¿Toma algo regularmente?" defaultValue={jugadoraEdit?.salud_profunda?.medicacion} className="w-full bg-white p-3 rounded-xl border-none font-bold text-sm" />
-  </div>
-
+     
   <section className="space-y-3">
   <h4 className="text-[10px] font-black text-rose-500 uppercase ml-4 tracking-[0.2em]">⚠️ Ficha Médica de Emergencia</h4>
   <div className="bg-white rounded-[32px] border-2 border-rose-500 overflow-hidden shadow-xl">
@@ -643,6 +638,10 @@ const detenerEscaneo = () => {
         🩸 {jugadoraSeleccionada.salud_profunda?.grupoSanguineo || 'S/D'}
       </span>
     </div>
+              <div className="space-y-1">
+    <label className="text-[9px] font-black text-slate-400 uppercase ml-2">Medicación Actual</label>
+    <input name="medicacion" placeholder="¿Toma algo regularmente?" defaultValue={jugadoraEdit?.salud_profunda?.medicacion} className="w-full bg-white p-3 rounded-xl border-none font-bold text-sm" />
+  </div>
 
     <div className="p-6 space-y-4">
       {/* Alergias y Medicación */}
@@ -679,7 +678,7 @@ const detenerEscaneo = () => {
       </div>
     </div>
   </div>
-</section>
+
                <div className="bg-slate-900 p-6 rounded-[32px] text-white shadow-xl italic text-sm">
                   {jugadoraSeleccionada.data?.health || "Sin observaciones médicas registradas."}
                </div>
