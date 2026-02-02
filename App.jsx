@@ -34,14 +34,15 @@ const appId = typeof __app_id !== 'undefined' ? __app_id : 'futsal-total-v3';
 
 // --- CONSTANTES ---
 const CATEGORIAS_EQUIPO = [
+  { id: 'primera', nombre: 'Primera.', edades: 'libre', color: 'bg-emerald-500' },
   { id: 'unicas', nombre: 'Únicas', edades: 'Plantel Superior', color: 'bg-rose-600' },
   { id: 'reserva', nombre: 'Reserva', edades: 'Sub-23', color: 'bg-orange-500' },
-  { id: '4ta', nombre: '4ta.', edades: '2008 / 2009', color: 'bg-amber-500' },
-  { id: '5ta', nombre: '5ta.', edades: '2010 / 2011', color: 'bg-emerald-500' },
-  { id: '6ta', nombre: '6ta.', edades: '2012 / 2013', color: 'bg-cyan-500' },
-  { id: '7ma', nombre: '7ma.', edades: '2014 / 2015', color: 'bg-blue-600' },
-  { id: '8va', nombre: '8va.', edades: '2016 / 2017', color: 'bg-indigo-600' },
-  { id: '9na', nombre: '9na.', edades: '2018 / 2021', color: 'bg-purple-600' },
+  { id: '4ta', nombre: '4ta.', edades: '2009 / 2010', color: 'bg-amber-500' },
+  { id: '5ta', nombre: '5ta.', edades: '2011 / 2012', color: 'bg-emerald-500' },
+  { id: '6ta', nombre: '6ta.', edades: '2013 / 2014', color: 'bg-cyan-500' },
+  { id: '7ma', nombre: '7ma.', edades: '2015 / 2016', color: 'bg-blue-600' },
+  { id: '8va', nombre: '8va.', edades: '2017 / 2018', color: 'bg-indigo-600' },
+  { id: '9na', nombre: '9na.', edades: '2019 / 2021', color: 'bg-purple-600' },
 ];
 
 const TIPOS_ASISTENCIA = [
@@ -257,6 +258,9 @@ const detenerEscaneo = () => {
       telEmergencia: formData.get('telEmergencia'),
       grupoSanguineo: formData.get('grupoSanguineo'),
     },
+
+    activities: jugadoraEdit?.activities || { attendance: [], matches: [], drills: [], payments: [] },
+    stats: jugadoraEdit?.stats || { behavior: 5, theory: 5 }
       
     };
 
@@ -629,16 +633,53 @@ const detenerEscaneo = () => {
     <input name="medicacion" placeholder="¿Toma algo regularmente?" defaultValue={jugadoraEdit?.salud_profunda?.medicacion} className="w-full bg-white p-3 rounded-xl border-none font-bold text-sm" />
   </div>
 
-  <div className="grid grid-cols-2 gap-3 border-t border-rose-200 pt-3">
-    <div className="space-y-1">
-      <label className="text-[9px] font-black text-rose-500 uppercase ml-2">Aviso Emergencia (Nombre)</label>
-      <input name="contactoEmergencia" placeholder="Nombre contacto" defaultValue={jugadoraEdit?.salud_profunda?.contactoEmergencia} className="w-full bg-white p-3 rounded-xl border-none font-bold text-sm" />
+  <section className="space-y-3">
+  <h4 className="text-[10px] font-black text-rose-500 uppercase ml-4 tracking-[0.2em]">⚠️ Ficha Médica de Emergencia</h4>
+  <div className="bg-white rounded-[32px] border-2 border-rose-500 overflow-hidden shadow-xl">
+    {/* Cabecera con Grupo Sanguíneo */}
+    <div className="bg-rose-500 p-4 flex justify-between items-center text-white">
+      <span className="font-black text-xs uppercase italic">Declaración Jurada</span>
+      <span className="bg-white text-rose-600 px-3 py-1 rounded-full font-black text-xs">
+        🩸 {jugadoraSeleccionada.salud_profunda?.grupoSanguineo || 'S/D'}
+      </span>
     </div>
-    <div className="space-y-1">
-      <label className="text-[9px] font-black text-rose-500 uppercase ml-2">Tel. Emergencia</label>
-      <input name="telEmergencia" placeholder="Teléfono" defaultValue={jugadoraEdit?.salud_profunda?.telEmergencia} className="w-full bg-white p-3 rounded-xl border-none font-bold text-sm" />
+
+    <div className="p-6 space-y-4">
+      {/* Alergias y Medicación */}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <p className="text-[9px] font-black text-slate-400 uppercase">Alergias / Patologías</p>
+          <p className="text-sm font-bold text-slate-800">{jugadoraSeleccionada.salud_profunda?.alergias || 'Ninguna'}</p>
+        </div>
+        <div>
+          <p className="text-[9px] font-black text-slate-400 uppercase">Medicación</p>
+          <p className="text-sm font-bold text-slate-800">{jugadoraSeleccionada.salud_profunda?.medicacion || 'No'}</p>
+        </div>
+      </div>
+
+      <div className="border-t pt-3">
+        <p className="text-[9px] font-black text-slate-400 uppercase">Obra Social / Prepaga</p>
+        <p className="text-sm font-bold text-slate-800">{jugadoraSeleccionada.salud_profunda?.obraSocial || 'No informada'}</p>
+      </div>
+
+      {/* Contacto de Urgencia destacado */}
+      <div className="bg-rose-50 p-4 rounded-2xl border border-rose-100">
+        <p className="text-[9px] font-black text-rose-600 uppercase mb-1">En caso de urgencia avisar a:</p>
+        <div className="flex justify-between items-center">
+          <div>
+            <p className="text-lg font-black text-slate-900 leading-none">{jugadoraSeleccionada.salud_profunda?.contactoEmergencia || 'Sin contacto'}</p>
+            <p className="text-sm font-bold text-rose-600 mt-1">{jugadoraSeleccionada.salud_profunda?.telEmergencia || ''}</p>
+          </div>
+          {jugadoraSeleccionada.salud_profunda?.telEmergencia && (
+            <a href={`tel:${jugadoraSeleccionada.salud_profunda.telEmergencia}`} className="bg-rose-500 p-3 rounded-full text-white shadow-lg active:scale-90 transition-transform">
+               📞
+            </a>
+          )}
+        </div>
+      </div>
     </div>
   </div>
+</section>
                <div className="bg-slate-900 p-6 rounded-[32px] text-white shadow-xl italic text-sm">
                   {jugadoraSeleccionada.data?.health || "Sin observaciones médicas registradas."}
                </div>
