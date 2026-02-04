@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { initializeApp } from 'firebase/app';
+import logoClub from './assets/logo.jpg';
 import { BrowserPDF417Reader } from '@zxing/browser';
 import { parsearDNIArgentino } from './src/utils/parsearDNIArgentino';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
@@ -472,7 +473,7 @@ const detenerEscaneo = () => {
     <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-xl border-2 border-indigo-600 overflow-hidden">
       {/* Reemplaza la URL de abajo por el link de tu escudo o logo */}
       <img 
-        src="./dist/assets/logo.jpeg" 
+        src={logoClub} 
         alt="Escudo Club" 
         className="w-20 h-20 object-contain"
         onError={(e) => e.target.src = "https://cdn-icons-png.flaticon.com/512/53/53254.png"} // Imagen de auxilio si falla el link
