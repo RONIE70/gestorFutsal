@@ -466,11 +466,26 @@ const detenerEscaneo = () => {
       {/* VISTA INICIO */}
       {vista === 'inicio' && (
         <div className="p-6 max-w-lg mx-auto">
-          <header className="py-12 text-center">
-            <h1 className="text-5xl font-black text-slate-950 italic tracking-tighter leading-none mb-2">FUTSAL<br/>FEMENINO</h1>
-            <div className="h-1.5 w-16 bg-indigo-600 mx-auto rounded-full mb-4 shadow-sm"></div>
-            <p className="text-slate-400 font-bold uppercase text-[9px] tracking-[0.3em]">Gestión Deportiva Pro</p>
-          </header>
+          <header className="py-12 text-center flex flex-col items-center">
+  {/* ESCUDO DEL CLUB */}
+  <div className="mb-6 relative">
+    <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-xl border-2 border-indigo-600 overflow-hidden">
+      {/* Reemplaza la URL de abajo por el link de tu escudo o logo */}
+      <img 
+        src="./dist/assets/logo.jpeg" 
+        alt="Escudo Club" 
+        className="w-20 h-20 object-contain"
+        onError={(e) => e.target.src = "https://cdn-icons-png.flaticon.com/512/53/53254.png"} // Imagen de auxilio si falla el link
+      />
+    </div>
+    {/* Decoración opcional: un brillo pequeño */}
+    <div className="absolute -top-1 -right-1 bg-indigo-600 w-4 h-4 rounded-full border-2 border-white"></div>
+  </div>
+
+  <h1 className="text-5xl font-black text-slate-950 italic tracking-tighter leading-none mb-2">FUTSAL<br/>FEMENINO</h1>
+  <div className="h-1.5 w-16 bg-indigo-600 mx-auto rounded-full mb-4 shadow-sm"></div>
+  <p className="text-slate-400 font-bold uppercase text-[9px] tracking-[0.3em]">Gestión Deportiva Pro</p>
+</header>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {CATEGORIAS_EQUIPO.map(cat => (
               <button key={cat.id} onClick={() => { setCategoriaSel(cat); setVista('categoria'); }} className={`${cat.color} h-36 rounded-[40px] shadow-lg text-white flex flex-col items-center justify-center active:scale-95 transition-all border-b-8 border-black/20`}>
