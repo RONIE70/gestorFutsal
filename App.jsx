@@ -34,7 +34,8 @@ const appId = typeof __app_id !== 'undefined' ? __app_id : 'futsal-total-v3';
 
 // --- CONSTANTES ---
 const CATEGORIAS_EQUIPO = [
-  { id: 'primera', nombre: 'Primera.', edades: 'libre', color: 'bg-emerald-500' },
+  { id: 'primera', nombre: 'Primera', edades: 'libre', color: 'bg-emerald-500' },
+  { id: '3ra.', nombre: '3ra.', edades: '2008-2007-2006', color: 'bg-orange-500' },
   { id: 'unicas', nombre: 'Únicas', edades: 'Plantel Superior', color: 'bg-rose-600' },
   { id: 'reserva', nombre: 'Reserva', edades: 'Sub-23', color: 'bg-orange-500' },
   { id: '4ta', nombre: '4ta.', edades: '2009 / 2010', color: 'bg-amber-500' },
@@ -465,7 +466,7 @@ const detenerEscaneo = () => {
               <span className="text-[9px] font-black opacity-60 bg-black/10 px-2 py-0.5 rounded-full uppercase">{categoriaSel.edades}</span>
             </div>
             <button onClick={() => { setJugadoraEdit(null); setMostrarForm(true); }} className="bg-white text-slate-900 px-5 py-2.5 rounded-2xl font-black text-[10px] shadow-xl active:scale-90 tracking-widest">
-              AGREGA
+              AGREGAR
             </button>
           </header>
 
@@ -569,31 +570,46 @@ const detenerEscaneo = () => {
       )}
 
       {/* VISTA DETALLE JUGADORA */}
-      {vista === 'detalle_jugadora' && jugadoraSeleccionada && (
-        <div className="min-h-screen bg-slate-50 flex flex-col text-slate-900">
-          <header className="bg-indigo-950 p-6 text-white flex justify-between items-center sticky top-0 z-50 shadow-2xl rounded-b-[40px]">
-            <button onClick={() => setVista('categoria')} className="bg-white/10 p-2 rounded-xl active:scale-90 transition-all">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7" /></svg>
-            </button>
-            <h2 className="text-[10px] font-black uppercase tracking-[0.3em] italic text-center">Ficha Integral</h2>
-            <div className="w-10"></div>
-          </header>
-          <div className="p-4 space-y-6 pb-20 overflow-y-auto flex-grow">
-            <div className="bg-white p-8 rounded-[48px] shadow-xl border border-slate-100 flex flex-col items-center text-center">
-              <div className="relative mb-4">
-                <div className="w-32 h-32 bg-indigo-50 rounded-full flex items-center justify-center text-6xl border-4 border-white shadow-xl overflow-hidden">
-                  {jugadoraSeleccionada.fotoDni ? <img src={jugadoraSeleccionada.fotoDni} className="w-full h-full object-cover" alt="foto" /> : "👤"}
-                </div>
-                <div className="absolute bottom-1 right-1 bg-green-500 w-6 h-6 rounded-full border-4 border-white"></div>
-              </div>
-              <h3 className="text-3xl font-black text-slate-900 uppercase tracking-tighter leading-none mb-1">{jugadoraSeleccionada.name}</h3>
-              <p className="text-indigo-600 font-black text-[10px] uppercase tracking-[0.4em] mb-6">DNI: {jugadoraSeleccionada.dni || 'PENDIENTE'}</p>
-              
-              <div className="flex gap-4 w-full">
-                <button onClick={() => { setJugadoraEdit(jugadoraSeleccionada); setMostrarForm(true); }} className="flex-1 bg-slate-100 text-slate-700 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-sm active:scale-95 transition-all">Editar</button>
-                <button onClick={() => eliminarJugadora(jugadoraSeleccionada.id)} className="flex-1 bg-red-50 text-red-600 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-sm active:scale-95 transition-all">Eliminar</button>
-              </div>
-            </div>
+{/* VISTA DETALLE JUGADORA */}
+{vista === 'detalle_jugadora' && jugadoraSeleccionada && (
+  <div className="min-h-screen bg-slate-50 flex flex-col text-slate-900">
+    <header className="bg-indigo-950 p-6 text-white flex justify-between items-center sticky top-0 z-50 shadow-2xl rounded-b-[40px]">
+      <button onClick={() => setVista('categoria')} className="bg-white/10 p-2 rounded-xl active:scale-90 transition-all">
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7" /></svg>
+      </button>
+      <h2 className="text-[10px] font-black uppercase tracking-[0.3em] italic text-center">Ficha de Atleta</h2>
+      <div className="w-10"></div>
+    </header>
+
+    <div className="p-4 space-y-6 pb-20 overflow-y-auto flex-grow">
+      {/* Perfil con Foto Grande */}
+      <div className="bg-white p-8 rounded-[48px] shadow-xl border border-slate-100 flex flex-col items-center text-center">
+        <div className="relative mb-4">
+          <div className="w-40 h-40 bg-indigo-50 rounded-[40px] flex items-center justify-center text-6xl border-4 border-white shadow-2xl overflow-hidden rotate-3 hover:rotate-0 transition-transform duration-500">
+            {jugadoraSeleccionada.fotoDni ? (
+              <img src={jugadoraSeleccionada.fotoDni} className="w-full h-full object-cover" alt="Perfil" />
+            ) : (
+              <span className="opacity-20 text-8xl">⚽</span>
+            )}
+          </div>
+          {/* Indicador de categoría */}
+          <div className={`absolute -bottom-2 -right-2 ${categoriaSel.color} text-white px-4 py-1 rounded-2xl text-[10px] font-black uppercase shadow-lg`}>
+            {categoriaSel.nombre}
+          </div>
+        </div>
+        
+        <h3 className="text-3xl font-black text-slate-900 uppercase tracking-tighter leading-none mb-1">
+          {jugadoraSeleccionada.name}
+        </h3>
+        {/* El DNI ya no se muestra aquí por privacidad */}
+        
+        <div className="flex gap-4 w-full mt-6">
+          <button onClick={() => { setJugadoraEdit(jugadoraSeleccionada); setMostrarForm(true); }} className="flex-1 bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl active:scale-95 transition-all">Editar Ficha</button>
+          <button onClick={() => eliminarJugadora(jugadoraSeleccionada.id)} className="p-4 bg-red-50 text-red-600 rounded-2xl shadow-sm active:scale-95 transition-all">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+          </button>
+        </div>
+      </div>
 
             <section className="space-y-3">
                <h4 className="text-[10px] font-black text-slate-500 uppercase ml-4 tracking-[0.2em]">Información de Contacto</h4>
