@@ -617,9 +617,76 @@ const detenerEscaneo = () => {
           </header>
           <div className="p-4 space-y-6 pb-20 overflow-y-auto flex-grow">
             <div className="bg-white p-8 rounded-[48px] shadow-xl flex flex-col items-center text-center border border-slate-100">
-             <h3 className="text-3xl font-black text-slate-900 uppercase leading-none mb-1">{jugadoraSeleccionada?.name}</h3>
+              <div className="w-40 h-40 bg-indigo-50 rounded-[40px] border-4 border-white shadow-2xl overflow-hidden rotate-3 hover:rotate-0 transition-transform duration-500 mb-4">
+                {jugadoraSeleccionada?.fotoPerfil ? <img src={jugadoraSeleccionada.fotoPerfil} className="w-full h-full object-cover" /> : <span className="opacity-20 text-8xl p-8 block">⚽</span>}
+              </div>
+              <h3 className="text-3xl font-black text-slate-900 uppercase leading-none mb-1">{jugadoraSeleccionada?.name}</h3>
               <button onClick={() => { setJugadoraEdit(jugadoraSeleccionada); setMostrarForm(true); }} className="mt-4 w-full bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl active:scale-95 transition-all">Editar Ficha</button>
             </div>
+
+            <section className="bg-white p-6 rounded-[32px] border border-slate-200 space-y-4 shadow-sm">
+              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Contacto y Ubicación</h4>
+              <div className="divide-y divide-slate-50 space-y-3">
+                <div className="flex justify-between items-center"><span className="text-[9px] font-black text-slate-400 uppercase">Teléfono</span><span className="text-sm font-bold text-slate-700">{jugadoraSeleccionada?.telefono || 'N/A'}</span></div>
+                <div className="pt-3 flex flex-col"><span className="text-[9px] font-black text-slate-400 uppercase mb-1">Dirección</span><span className="text-sm font-bold text-slate-700 leading-tight">{jugadoraSeleccionada?.direccion || 'N/A'}</span></div>
+                <div className="pt-3 flex justify-between items-center"><span className="text-[9px] font-black text-slate-400 uppercase">Escuela</span><span className="text-sm font-bold text-slate-700">{jugadoraSeleccionada?.escuela || 'N/A'}</span></div>
+              </div>
+            </section>
+
+            <section className="bg-white rounded-[32px] border-2 border-rose-500 overflow-hidden shadow-xl">
+              <div className="bg-rose-500 p-4 flex justify-between items-center text-white font-black text-xs uppercase">
+                <span>Emergencia Médica</span>
+                <span className="bg-white text-rose-600 px-3 py-1 rounded-full italic">🩸 {jugadoraSeleccionada?.salud_profunda?.grupoSanguineo || 'S/D'}</span>
+              </div>
+              <div className="p-6 space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div><p className="text-[9px] font-black text-slate-400 uppercase">Alergias</p><p className="text-sm font-bold text-slate-800">{jugadoraSeleccionada?.salud_profunda?.alergias || 'Ninguna'}</p></div>
+                  <div><p className="text-[9px] font-black text-slate-400 uppercase">Medicación</p><p className="text-sm font-bold text-slate-800">{jugadoraSeleccionada?.salud_profunda?.medicacion || 'No informada'}</p></div>
+                </div>
+                <div className="border-t pt-3"><p className="text-[9px] font-black text-slate-400 uppercase">Obra Social</p><p className="text-sm font-bold text-slate-800">{jugadoraSeleccionada?.salud_profunda?.obraSocial || 'No informada'}</p></div>
+                <div className="bg-rose-50 p-4 rounded-2xl border border-rose-100 flex justify-between items-center">
+                  <div className="flex-grow">
+                    <p className="text-[9px] font-black text-rose-600 uppercase mb-1">En caso de urgencia avisar a:</p>
+                    <p className="text-lg font-black text-slate-900 leading-none">{jugadoraSeleccionada?.salud_profunda?.contactoEmergencia || 'Sin contacto'}</p>
+                    <p className="text-sm font-bold text-rose-600 mt-1">{jugadoraSeleccionada?.salud_profunda?.telEmergencia || ''}</p>
+                  </div>
+                  {jugadoraSeleccionada?.salud_profunda?.telEmergencia && <a href={`tel:${jugadoraSeleccionada.salud_profunda.telEmergencia}`} className="bg-rose-500 p-3 rounded-full text-white shadow-lg active:scale-90 transition-transform">📞</a>}
+                </div>
+              </div>
+            </section>
+
+            <section className="space-y-3">
+               <h4 className="text-[10px] font-black text-slate-500 uppercase ml-4 tracking-[0.2em]">Información de Contacto</h4>
+               <div className="bg-white p-6 rounded-[32px] border border-slate-200 space-y-4 shadow-sm">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[9px] font-black text-slate-400 uppercase">Teléfono</span>
+                    <span className="text-sm font-bold text-slate-700 tracking-tight">{jugadoraSeleccionada.telefono || 'N/A'}</span>
+                  </div>
+                  <div className="flex flex-col border-t pt-3">
+                    <span className="text-[9px] font-black text-slate-400 uppercase mb-1">Dirección</span>
+                    <span className="text-sm font-bold text-slate-700 leading-tight">{jugadoraSeleccionada.direccion || 'N/A'}</span>
+                  </div>
+                  <div className="flex justify-between items-center border-t pt-3">
+                    <span className="text-[9px] font-black text-slate-400 uppercase">Escuela</span>
+                    <span className="text-sm font-bold text-slate-700">{jugadoraSeleccionada.escuela || 'N/A'}</span>
+                  </div>
+               </div>
+            </section>
+
+            <section className="space-y-3">
+               <h4 className="text-[10px] font-black text-slate-500 uppercase ml-4 tracking-[0.2em]">Adultos Responsables</h4>
+               <div className="bg-white p-6 rounded-[32px] border border-slate-200 grid grid-cols-2 gap-4 shadow-sm">
+                  <div className="flex flex-col">
+                    <span className="text-[9px] font-black text-indigo-400 uppercase mb-1">Padre</span>
+                    <span className="text-xs font-black text-slate-700 uppercase">{jugadoraSeleccionada.nombrePadre || 'N/A'}</span>
+                  </div>
+                  <div className="flex flex-col border-l pl-4">
+                    <span className="text-[9px] font-black text-rose-400 uppercase mb-1">Madre</span>
+                    <span className="text-xs font-black text-slate-700 uppercase">{jugadoraSeleccionada.nombreMadre || 'N/A'}</span>
+                  </div>
+               </div>
+            </section>
+
      
   <section className="space-y-3">
   <h4 className="text-[10px] font-black text-rose-500 uppercase ml-4 tracking-[0.2em]">⚠️ Ficha Médica de Emergencia</h4>
@@ -644,7 +711,7 @@ const detenerEscaneo = () => {
           <p className="text-sm font-bold text-slate-800">{jugadoraSeleccionada.salud_profunda?.alergias || 'Ninguna'}</p>
         </div>
         <div>
-          <p className="text-[9px] font-black text-slate-400 uppercase">Medicación</p>
+          <p className="text-[9px] font-black text-slate-400 uppercase">Dolencias físicas</p>
           <p className="text-sm font-bold text-slate-800">{jugadoraSeleccionada.salud_profunda?.medicacion || 'No'}</p>
         </div>
       </div>
