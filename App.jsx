@@ -507,6 +507,11 @@ const detenerEscaneo = () => {
               jugadoras.map(p => (
                 <div key={p.id} className="bg-white p-5 rounded-[32px] shadow-md border border-slate-200 flex justify-between items-center transition-all hover:border-indigo-300">
                   <div className="flex-grow flex items-center gap-4" onClick={() => { setJugadoraSeleccionada(p); setVista('detalle_jugadora'); }}>
+                    {p?.fotoPerfil ? (
+              <img src={p.fotoPerfil} className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-xl">👤</span>
+            )}
                     <div className="w-40 h-40 bg-indigo-50 rounded-[40px] flex items-center justify-center text-6xl border-4 border-white shadow-2xl overflow-hidden">
   {jugadoraSeleccionada.fotoPerfil ? (
     <img src={jugadoraSeleccionada.fotoPerfil} className="w-full h-full object-cover" alt="Perfil" />
