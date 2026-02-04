@@ -504,21 +504,21 @@ const detenerEscaneo = () => {
                 <p className="font-black uppercase tracking-widest text-[10px] italic">Sin atletas registradas</p>
               </div>
             ) : (
-              jugadoras.map(p => (
+              jugadoras.filter(p => p !== null).map(p => (
                 <div key={p.id} className="bg-white p-5 rounded-[32px] shadow-md border border-slate-200 flex justify-between items-center transition-all hover:border-indigo-300">
                   <div className="flex-grow flex items-center gap-4" onClick={() => { setJugadoraSeleccionada(p); setVista('detalle_jugadora'); }}>
-                    {p?.fotoPerfil ? (
-              <img src={p.fotoPerfil} className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-xl">👤</span>
-            )}
+                   {(p?.fotoPerfil || p?.fotoDni) ? (
+              <img src={p.fotoPerfil || p.fotoDni} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-xl">👤</span>
+                    )}
                     <div className="w-40 h-40 bg-indigo-50 rounded-[40px] flex items-center justify-center text-6xl border-4 border-white shadow-2xl overflow-hidden">
-  {jugadoraSeleccionada.fotoPerfil ? (
-    <img src={jugadoraSeleccionada.fotoPerfil} className="w-full h-full object-cover" alt="Perfil" />
-  ) : (
-    <span className="opacity-20 text-8xl">⚽</span>
-  )}
-</div>
+                      {jugadoraSeleccionada.fotoPerfil ? (
+                        <img src={jugadoraSeleccionada.fotoPerfil} className="w-full h-full object-cover" alt="Perfil" />
+                      ) : (
+                        <span className="opacity-20 text-8xl">⚽</span>
+                      )}
+        </div>
                     <div>
                       <p className="text-lg font-black text-slate-800 uppercase tracking-tighter leading-none mb-1">{p.name}</p>
                       <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">ID: {p.dni}</p>
