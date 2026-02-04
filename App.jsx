@@ -89,6 +89,7 @@ export default function App() {
   const [pestanaRegistro, setPestanaRegistro] = useState('asistencia');
   const [mensaje, setMensaje] = useState(null);
   const [fotoDniBase64, setFotoDniBase64] = useState(null);
+  const [fotoPerfilBase64, setFotoPerfilBase64] = useState(null);
 
 
     /* ===================== INIT FIREBASE ===================== */
@@ -246,6 +247,7 @@ const detenerEscaneo = () => {
       escuela: formData.get('escuela'),
       nombrePadre: formData.get('nombrePadre'),
       nombreMadre: formData.get('nombreMadre'),
+      fotoPerfil: fotoPerfilBase64 || jugadoraEdit?.fotoPerfil || '',
       fotoDni: fotoDniBase64 || jugadoraEdit?.fotoDni || '',
       activities: jugadoraEdit?.activities || { attendance: [], matches: [], drills: [], payments: [] },
       data: { dni: formData.get('dni'), health: formData.get('health') || '' },
@@ -344,19 +346,45 @@ const detenerEscaneo = () => {
             </button>
 
             
-            <div className="space-y-1">
-              <label className="text-[10px] font-black text-slate-400 uppercase ml-2">Foto DNI (Frente/Dorso)</label>
-              <div className="relative">
-                <input type="file" accept="image/*" capture="environment" onChange={handleFotoDni} className="hidden" id="foto-dni-input" />
-                <label htmlFor="foto-dni-input" className="w-full bg-slate-100 p-4 rounded-2xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-200 transition">
-                  {fotoDniBase64 || jugadoraEdit?.fotoDni ? (
-                    <img src={fotoDniBase64 || jugadoraEdit?.fotoDni} alt="Vista previa DNI" className="h-24 rounded-lg shadow-sm" />
-                  ) : (
-                    <span className="text-[10px] font-black text-slate-500 uppercase">Tap para capturar foto</span>
-                  )}
-                </label>
-              </div>
-            </div>
+            <div className="grid grid-cols-2 gap-4">
+  {/* FOTO DE PERFIL (La que se verá en la ficha) */}
+  <div className="space-y-1">
+    <label className="text-[10px] font-black text-indigo-600 uppercase ml-2">Foto Jugadora</label>
+    <div className="relative">
+      <input type="file" accept="image/*" capture="user" 
+        onChange={(e) => {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => setFotoPerfilBase64(reader.result); // Necesitas crear este estado
+            reader.readAsDataURL(file);
+          }
+        }} className="hidden" id="foto-perfil-input" />
+      <label htmlFor="foto-perfil-input" className="w-full h-32 bg-indigo-50 rounded-2xl border-2 border-dashed border-indigo-200 flex flex-col items-center justify-center cursor-pointer overflow-hidden">
+        {fotoPerfilBase64 || jugadoraEdit?.fotoPerfil ? (
+          <img src={fotoPerfilBase64 || jugadoraEdit?.fotoPerfil} className="w-full h-full object-cover" />
+        ) : (
+          <span className="text-[10px] font-black text-indigo-400 uppercase text-center p-2">Subir Foto Jugadora</span>
+        )}
+      </label>
+    </div>
+  </div>
+
+  {/* FOTO DNI (Guardada por seguridad) */}
+  <div className="space-y-1">
+    <label className="text-[10px] font-black text-slate-400 uppercase ml-2">Foto DNI</label>
+    <div className="relative">
+      <input type="file" accept="image/*" capture="environment" onChange={handleFotoDni} className="hidden" id="foto-dni-input" />
+      <label htmlFor="foto-dni-input" className="w-full h-32 bg-slate-100 rounded-2xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center cursor-pointer overflow-hidden">
+        {fotoDniBase64 || jugadoraEdit?.fotoDni ? (
+          <img src={fotoDniBase64 || jugadoraEdit?.fotoDni} className="w-full h-full object-cover opacity-50" />
+        ) : (
+          <span className="text-[10px] font-black text-slate-400 uppercase text-center p-2">Subir Foto DNI</span>
+        )}
+      </label>
+    </div>
+  </div>
+</div>
           </div>
 
           <div className="space-y-1">
@@ -479,9 +507,13 @@ const detenerEscaneo = () => {
               jugadoras.map(p => (
                 <div key={p.id} className="bg-white p-5 rounded-[32px] shadow-md border border-slate-200 flex justify-between items-center transition-all hover:border-indigo-300">
                   <div className="flex-grow flex items-center gap-4" onClick={() => { setJugadoraSeleccionada(p); setVista('detalle_jugadora'); }}>
-                    <div className="w-12 h-12 bg-slate-100 rounded-full overflow-hidden flex items-center justify-center border border-slate-200">
-                      {p.fotoDni ? <img src={p.fotoDni} className="w-full h-full object-cover" alt="foto" /> : <span className="text-xs">👤</span>}
-                    </div>
+                    <div className="w-40 h-40 bg-indigo-50 rounded-[40px] flex items-center justify-center text-6xl border-4 border-white shadow-2xl overflow-hidden">
+  {jugadoraSeleccionada.fotoPerfil ? (
+    <img src={jugadoraSeleccionada.fotoPerfil} className="w-full h-full object-cover" alt="Perfil" />
+  ) : (
+    <span className="opacity-20 text-8xl">⚽</span>
+  )}
+</div>
                     <div>
                       <p className="text-lg font-black text-slate-800 uppercase tracking-tighter leading-none mb-1">{p.name}</p>
                       <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">ID: {p.dni}</p>
