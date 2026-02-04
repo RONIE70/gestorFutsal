@@ -499,25 +499,25 @@ const detenerEscaneo = () => {
           </header>
 
           <div className="flex-grow p-6 overflow-y-auto space-y-4 pb-36">
-            {jugadoras.length === 0 ? (
-              <div className="text-center py-20 text-slate-300">
-                <p className="font-black uppercase tracking-widest text-[10px] italic">Sin atletas registradas</p>
-              </div>
+  {jugadoras.length === 0 ? (
+    <div className="text-center py-20 text-slate-300">
+      <p className="font-black uppercase tracking-widest text-[10px] italic">Sin atletas registradas</p>
+    </div>
+  ) : (
+    /* Filtramos para que si hay un dato corrupto en la base no rompa el resto */
+    jugadoras.filter(p => p && p.name).map(p => (
+      <div key={p.id} className="bg-white p-5 rounded-[32px] shadow-md border border-slate-200 flex justify-between items-center transition-all hover:border-indigo-300">
+        <div className="flex-grow flex items-center gap-4" onClick={() => { setJugadoraSeleccionada(p); setVista('detalle_jugadora'); }}>
+          
+          {/* FOTO: Usa fotoPerfil y si no existe usa fotoDni que es lo que tenés en la base */}
+          <div className="w-12 h-12 bg-slate-100 rounded-full overflow-hidden flex items-center justify-center border border-slate-200">
+            {p.fotoPerfil ? (
+              <img src={p.fotoPerfil} className="w-full h-full object-cover" alt="Perfil" />
+            ) : p.fotoDni ? (
+              <img src={p.fotoDni} className="w-full h-full object-cover" alt="DNI" />
             ) : (
-              jugadoras.filter(p => p !== null).map(p => (
-                <div key={p.id} className="bg-white p-5 rounded-[32px] shadow-md border border-slate-200 flex justify-between items-center transition-all hover:border-indigo-300">
-                  <div className="flex-grow flex items-center gap-4" onClick={() => { setJugadoraSeleccionada(p); setVista('detalle_jugadora'); }}>
-                   {(p?.fotoPerfil || p?.fotoDni) ? (
-              <img src={p.fotoPerfil || p.fotoDni} className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="text-xl">👤</span>
-                    )}
-                    <div className="w-40 h-40 bg-indigo-50 rounded-[40px] flex items-center justify-center text-6xl border-4 border-white shadow-2xl overflow-hidden">
-                      {jugadoraSeleccionada.fotoPerfil ? (
-                        <img src={jugadoraSeleccionada.fotoPerfil} className="w-full h-full object-cover" alt="Perfil" />
-                      ) : (
-                        <span className="opacity-20 text-8xl">⚽</span>
-                      )}
+              <span className="text-xs">👤</span>
+            )}
         </div>
                     <div>
                       <p className="text-lg font-black text-slate-800 uppercase tracking-tighter leading-none mb-1">{p.name}</p>
