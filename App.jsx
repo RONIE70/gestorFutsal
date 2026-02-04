@@ -34,11 +34,11 @@ const appId = typeof __app_id !== 'undefined' ? __app_id : 'futsal-total-v3';
 
 // --- CONSTANTES ---
 const CATEGORIAS_EQUIPO = [
-  { id: 'primera', nombre: 'Primera', edades: 'libre', color: 'bg-emerald-500' },
-  { id: '3ra.', nombre: '3ra.', edades: '2008-2007-2006', color: 'bg-orange-500' },
+  { id: 'primera', nombre: 'Primera', edades: 'libre', color: 'bg-zinc-800' },
+  { id: '3ra.', nombre: '3ra.', edades: '2008-2007-2006', color: 'bg-indigo-500' },
   { id: 'unicas', nombre: 'Únicas', edades: 'Plantel Superior', color: 'bg-rose-600' },
-  { id: 'reserva', nombre: 'Reserva', edades: 'Sub-23', color: 'bg-orange-500' },
-  { id: '4ta', nombre: '4ta.', edades: '2009 / 2010', color: 'bg-amber-500' },
+  { id: 'reserva', nombre: 'Reserva', edades: 'Sub-23', color: 'bg-amber-500' },
+  { id: '4ta', nombre: '4ta.', edades: '2009 / 2010', color: 'bg-lime-500' },
   { id: '5ta', nombre: '5ta.', edades: '2011 / 2012', color: 'bg-emerald-500' },
   { id: '6ta', nombre: '6ta.', edades: '2013 / 2014', color: 'bg-cyan-500' },
   { id: '7ma', nombre: '7ma.', edades: '2015 / 2016', color: 'bg-blue-600' },
