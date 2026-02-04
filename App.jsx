@@ -609,44 +609,51 @@ const detenerEscaneo = () => {
       {/* VISTA DETALLE JUGADORA */}
 {/* VISTA DETALLE JUGADORA */}
 {vista === 'detalle_jugadora' && jugadoraSeleccionada && (
-  <div className="min-h-screen bg-slate-50 flex flex-col text-slate-900">
-    <header className="bg-indigo-950 p-6 text-white flex justify-between items-center sticky top-0 z-50 shadow-2xl rounded-b-[40px]">
-      <button onClick={() => setVista('categoria')} className="bg-white/10 p-2 rounded-xl active:scale-90 transition-all">
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7" /></svg>
-      </button>
-      <h2 className="text-[10px] font-black uppercase tracking-[0.3em] italic text-center">Ficha de Atleta</h2>
-      <div className="w-10"></div>
-    </header>
+        <div className="min-h-screen bg-slate-50 flex flex-col text-slate-900">
+          <header className="bg-indigo-950 p-6 text-white flex justify-between items-center rounded-b-[40px] sticky top-0 z-50 shadow-2xl">
+            <button onClick={() => setVista('categoria')} className="bg-white/10 p-2 rounded-xl active:scale-90 transition-transform"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7" /></svg></button>
+            <h2 className="text-[10px] font-black uppercase tracking-[0.3em] italic">Ficha de Atleta</h2>
+            <div className="w-10"></div>
+          </header>
+          <div className="p-4 space-y-6 pb-20 overflow-y-auto flex-grow">
+            <div className="bg-white p-8 rounded-[48px] shadow-xl flex flex-col items-center text-center border border-slate-100">
+              <div className="w-40 h-40 bg-indigo-50 rounded-[40px] border-4 border-white shadow-2xl overflow-hidden rotate-3 hover:rotate-0 transition-transform duration-500 mb-4">
+                {jugadoraSeleccionada?.fotoPerfil ? <img src={jugadoraSeleccionada.fotoPerfil} className="w-full h-full object-cover" /> : <span className="opacity-20 text-8xl p-8 block">⚽</span>}
+              </div>
+              <h3 className="text-3xl font-black text-slate-900 uppercase leading-none mb-1">{jugadoraSeleccionada?.name}</h3>
+              <button onClick={() => { setJugadoraEdit(jugadoraSeleccionada); setMostrarForm(true); }} className="mt-4 w-full bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl active:scale-95 transition-all">Editar Ficha</button>
+            </div>
 
-    <div className="p-4 space-y-6 pb-20 overflow-y-auto flex-grow">
-      {/* Perfil con Foto Grande */}
-      <div className="bg-white p-8 rounded-[48px] shadow-xl border border-slate-100 flex flex-col items-center text-center">
-        <div className="relative mb-4">
-          <div className="w-40 h-40 bg-indigo-50 rounded-[40px] flex items-center justify-center text-6xl border-4 border-white shadow-2xl overflow-hidden rotate-3 hover:rotate-0 transition-transform duration-500">
-            {jugadoraSeleccionada.fotoDni ? (
-              <img src={jugadoraSeleccionada.fotoDni} className="w-full h-full object-cover" alt="Perfil" />
-            ) : (
-              <span className="opacity-20 text-8xl">⚽</span>
-            )}
-          </div>
-          {/* Indicador de categoría */}
-          <div className={`absolute -bottom-2 -right-2 ${categoriaSel.color} text-white px-4 py-1 rounded-2xl text-[10px] font-black uppercase shadow-lg`}>
-            {categoriaSel.nombre}
-          </div>
-        </div>
-        
-        <h3 className="text-3xl font-black text-slate-900 uppercase tracking-tighter leading-none mb-1">
-          {jugadoraSeleccionada.name}
-        </h3>
-        {/* El DNI ya no se muestra aquí por privacidad */}
-        
-        <div className="flex gap-4 w-full mt-6">
-          <button onClick={() => { setJugadoraEdit(jugadoraSeleccionada); setMostrarForm(true); }} className="flex-1 bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl active:scale-95 transition-all">Editar Ficha</button>
-          <button onClick={() => eliminarJugadora(jugadoraSeleccionada.id)} className="p-4 bg-red-50 text-red-600 rounded-2xl shadow-sm active:scale-95 transition-all">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-          </button>
-        </div>
-      </div>
+            <section className="bg-white p-6 rounded-[32px] border border-slate-200 space-y-4 shadow-sm">
+              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Contacto y Ubicación</h4>
+              <div className="divide-y divide-slate-50 space-y-3">
+                <div className="flex justify-between items-center"><span className="text-[9px] font-black text-slate-400 uppercase">Teléfono</span><span className="text-sm font-bold text-slate-700">{jugadoraSeleccionada?.telefono || 'N/A'}</span></div>
+                <div className="pt-3 flex flex-col"><span className="text-[9px] font-black text-slate-400 uppercase mb-1">Dirección</span><span className="text-sm font-bold text-slate-700 leading-tight">{jugadoraSeleccionada?.direccion || 'N/A'}</span></div>
+                <div className="pt-3 flex justify-between items-center"><span className="text-[9px] font-black text-slate-400 uppercase">Escuela</span><span className="text-sm font-bold text-slate-700">{jugadoraSeleccionada?.escuela || 'N/A'}</span></div>
+              </div>
+            </section>
+
+            <section className="bg-white rounded-[32px] border-2 border-rose-500 overflow-hidden shadow-xl">
+              <div className="bg-rose-500 p-4 flex justify-between items-center text-white font-black text-xs uppercase">
+                <span>Emergencia Médica</span>
+                <span className="bg-white text-rose-600 px-3 py-1 rounded-full italic">🩸 {jugadoraSeleccionada?.salud_profunda?.grupoSanguineo || 'S/D'}</span>
+              </div>
+              <div className="p-6 space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div><p className="text-[9px] font-black text-slate-400 uppercase">Alergias</p><p className="text-sm font-bold text-slate-800">{jugadoraSeleccionada?.salud_profunda?.alergias || 'Ninguna'}</p></div>
+                  <div><p className="text-[9px] font-black text-slate-400 uppercase">Medicación</p><p className="text-sm font-bold text-slate-800">{jugadoraSeleccionada?.salud_profunda?.medicacion || 'No informada'}</p></div>
+                </div>
+                <div className="border-t pt-3"><p className="text-[9px] font-black text-slate-400 uppercase">Obra Social</p><p className="text-sm font-bold text-slate-800">{jugadoraSeleccionada?.salud_profunda?.obraSocial || 'No informada'}</p></div>
+                <div className="bg-rose-50 p-4 rounded-2xl border border-rose-100 flex justify-between items-center">
+                  <div className="flex-grow">
+                    <p className="text-[9px] font-black text-rose-600 uppercase mb-1">En caso de urgencia avisar a:</p>
+                    <p className="text-lg font-black text-slate-900 leading-none">{jugadoraSeleccionada?.salud_profunda?.contactoEmergencia || 'Sin contacto'}</p>
+                    <p className="text-sm font-bold text-rose-600 mt-1">{jugadoraSeleccionada?.salud_profunda?.telEmergencia || ''}</p>
+                  </div>
+                  {jugadoraSeleccionada?.salud_profunda?.telEmergencia && <a href={`tel:${jugadoraSeleccionada.salud_profunda.telEmergencia}`} className="bg-rose-500 p-3 rounded-full text-white shadow-lg active:scale-90 transition-transform">📞</a>}
+                </div>
+              </div>
+            </section>
 
             <section className="space-y-3">
                <h4 className="text-[10px] font-black text-slate-500 uppercase ml-4 tracking-[0.2em]">Información de Contacto</h4>
