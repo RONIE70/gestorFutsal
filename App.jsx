@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { initializeApp } from 'firebase/app';
-import logoClub from './dist/assets/logo.jpg';
+import logoClub from 'dist/assets/logo.jpg';
 import { BrowserPDF417Reader } from '@zxing/browser';
 import { parsearDNIArgentino } from './src/utils/parsearDNIArgentino';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
