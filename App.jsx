@@ -128,22 +128,48 @@ export default function App() {
 
   /* ===================== SNAPSHOTS ===================== */
   useEffect(() => {
-    if (!usuario || !db || !categoriaSel) return;
-    
-    // Players Snapshot
-    const unsubP = onSnapshot(query(collection(db, 'artifacts', appId, 'users', usuario.uid, 'players'), where("category", "==", categoriaSel.id)), (snap) => {
-      setJugadoras(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    });
+  if (!usuario || !db || !categoriaSel) return;
 
-    // Pizarra Snapshot (Hoy)
-    const hoyId = new Date().toISOString().split('T')[0];
-    const unsubPizarra = onSnapshot(doc(db, 'artifacts', appId, 'users', usuario.uid, 'daily_plans', `${categoriaSel.id}_${hoyId}`), (doc) => {
-      if (doc.exists()) setPizarraHoy(doc.data());
+  // Players Snapshot (CORREGIDO A /players)
+  const unsubP = onSnapshot(
+    query(
+      collection(db, 'players'),
+      where("category", "==", categoriaSel.id)
+    ),
+    (snap) => {
+      setJugadoras(
+        snap.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }))
+      );
+    }
+  );
+
+  // Pizarra Snapshot (Hoy) — ESTO LO DEJAMOS IGUAL
+  const hoyId = new Date().toISOString().split('T')[0];
+  const unsubPizarra = onSnapshot(
+    doc(
+      db,
+      'artifacts',
+      appId,
+      'users',
+      usuario.uid,
+      'daily_plans',
+      `${categoriaSel.id}_${hoyId}`
+    ),
+    (docSnap) => {
+      if (docSnap.exists()) setPizarraHoy(docSnap.data());
       else setPizarraHoy(null);
-    });
+    }
+  );
 
-    return () => { unsubP(); unsubPizarra(); };
-  }, [usuario, db, categoriaSel]);  
+  return () => {
+    unsubP();
+    unsubPizarra();
+  };
+}, [usuario, db, categoriaSel]);
+
 
 
   /* ===================== LÓGICA ESCÁNER ===================== */
