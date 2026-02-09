@@ -358,7 +358,7 @@ export default function App() {
     const hoyId = new Date().toISOString().split('T')[0];
     const data = {
       title: formData.get('titulo'),
-      description: formData.get('descripcion'),
+      description: formData.get('description'),
       videoLink: formData.get('link'),
       date: hoyId,
       category: categoriaSel.id,
@@ -579,6 +579,29 @@ export default function App() {
         </button>
       }
     />
+    <div className="flex justify-around bg-white py-3 border-b">
+  <button
+    onClick={() => setVista('historial')}
+    className="text-xs font-black uppercase text-slate-500"
+  >
+    Historial
+  </button>
+
+  <button
+    onClick={() => setVista('plan_diario')}
+    className="text-xs font-black uppercase text-indigo-600"
+  >
+    Plan Diario
+  </button>
+
+  <button
+    onClick={() => setVista('planificador')}
+    className="text-xs font-black uppercase text-slate-500"
+  >
+    Planificador
+  </button>
+</div>
+
 
     <div className="flex-grow p-6 overflow-y-auto space-y-4 pb-36">
       {jugadoras.length === 0 ? (
