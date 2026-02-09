@@ -351,7 +351,7 @@ const detenerEscaneo = () => {
   <div className="space-y-1">
     <label className="text-[10px] font-black text-indigo-600 uppercase ml-2">Foto Jugadora</label>
     <div className="relative">
-      <input type="file" accept="image/*" capture="user" 
+      <input type="file" accept="image/*"
         onChange={(e) => {
           const file = e.target.files[0];
           if (file) {
@@ -374,7 +374,7 @@ const detenerEscaneo = () => {
   <div className="space-y-1">
     <label className="text-[10px] font-black text-slate-400 uppercase ml-2">Foto DNI</label>
     <div className="relative">
-      <input type="file" accept="image/*" capture="environment" onChange={handleFotoDni} className="hidden" id="foto-dni-input" />
+      <input type="file" accept="image/*" onChange={handleFotoDni} className="hidden" id="foto-dni-input" />
       <label htmlFor="foto-dni-input" className="w-full h-32 bg-slate-100 rounded-2xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center cursor-pointer overflow-hidden">
         {fotoDniBase64 || jugadoraEdit?.fotoDni ? (
           <img src={fotoDniBase64 || jugadoraEdit?.fotoDni} className="w-full h-full object-cover opacity-50" />
