@@ -92,6 +92,7 @@ export default function App() {
   const [pizarraHoy, setPizarraHoy] = useState(null);
   const [libLoaded, setLibLoaded] = useState(false);
   const [sesionActiva, setSesionActiva] = useState(null);
+  const [entrenamientos, setEntrenamientos] = useState([]);
 
   const [vista, setVista] = useState('inicio'); 
   const [categoriaSel, setCategoriaSel] = useState(null);
@@ -128,11 +129,11 @@ export default function App() {
   }, [escaneando, libLoaded]);
 
   /* ===================== SNAPSHOTS ===================== */
-  useEffect(() => {
+useEffect(() => {
   if (!usuario || !db || !categoriaSel) return;
 
-  // Players Snapshot (CORREGIDO A /players)
-  const unsubP = onSnapshot(
+  // 🔹 PLAYERS SNAPSHOT
+  const unsubPlayers = onSnapshot(
     query(
       collection(db, 'players'),
       where("category", "==", categoriaSel.id)
@@ -147,29 +148,30 @@ export default function App() {
     }
   );
 
-  // Pizarra Snapshot (Hoy) — ESTO LO DEJAMOS IGUAL
-  const hoyId = new Date().toISOString().split('T')[0];
-  const unsubPizarra = onSnapshot(
-    doc(
-      db,
-      'artifacts',
-      appId,
-      'users',
-      usuario.uid,
-      'daily_plans',
-      `${categoriaSel.id}_${hoyId}`
+  // 🔹 TRAININGS SNAPSHOT
+  const unsubTrainings = onSnapshot(
+    query(
+      collection(db, 'artifacts', appId, 'users', usuario.uid, 'trainings'),
+      where("category", "==", categoriaSel.id)
     ),
-    (docSnap) => {
-      if (docSnap.exists()) setPizarraHoy(docSnap.data());
-      else setPizarraHoy(null);
+    (snap) => {
+      setEntrenamientos(
+        snap.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }))
+      );
     }
   );
 
+  // 🔹 CLEANUP
   return () => {
-    unsubP();
-    unsubPizarra();
+    unsubPlayers();
+    unsubTrainings();
   };
+
 }, [usuario, db, categoriaSel]);
+
 
 
 
@@ -749,7 +751,9 @@ export default function App() {
       <button
         onClick={async () => {
           try {
-            await addDoc(collection(db, 'artifacts', appId, 'users', usuario.uid, 'trainings'), { ...sesionActiva, createdAt: Date.now() });
+            await addDoc(collection(db, 'artifacts', appId, 'users', usuario.uid, 'trainings'), {
+            ...sesionActiva, createdAt: Date.now(),
+            category: categoriaSel.id });
             mostrarAviso("Sesión guardada");
             setVista('categoria');
           } catch (e) {
@@ -764,6 +768,45 @@ export default function App() {
   </div>
   
 )}
+
+{/* ===================== VISTA HISTORIAL ===================== */}
+{vista === 'historial' && (
+  <div className="min-h-screen bg-slate-50 flex flex-col text-slate-900">
+    <Header
+      title="Historial"
+      sub={categoriaSel.nombre}
+      onBack={() => setVista('categoria')}
+    />
+
+    <div className="p-4 space-y-4 pb-20 overflow-y-auto">
+      {entrenamientos.length === 0 ? (
+        <div className="text-center py-20 text-slate-300">
+          <p className="font-black uppercase tracking-widest text-[10px] italic">
+            Sin entrenamientos guardados
+          </p>
+        </div>
+      ) : (
+        [...entrenamientos]
+          .sort((a, b) => b.createdAt - a.createdAt)
+          .map((entreno) => (
+            <div key={entreno.id} className="bg-white p-6 rounded-[32px] shadow border">
+              <p className="text-[10px] text-slate-400 font-black uppercase mb-2">
+                {new Date(entreno.createdAt).toLocaleDateString()}
+              </p>
+
+              {entreno.parts?.map((part, i) => (
+                <div key={i} className="flex justify-between text-xs font-bold border-b py-2">
+                  <span>{part.name}</span>
+                  <span>{part.duration}'</span>
+                </div>
+              ))}
+            </div>
+          ))
+      )}
+    </div>
+  </div>
+)}
+
 
 
       {/* VISTA REGISTRO RÁPIDO */}
