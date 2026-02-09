@@ -16,7 +16,7 @@ import {
   where,
   setDoc
 } from 'firebase/firestore';
-
+import { Calendar, Tv, History, Users, ClipboardCheck, DollarSign, ChevronLeft, Camera, Trash2, Edit3, Activity, BookOpen, CreditCard, FileText, AlertTriangle, Shirt, X, PlayCircle, Plus } from 'lucide-react';
 
 
 // --- CONFIGURACIÓN DE FIREBASE ---
