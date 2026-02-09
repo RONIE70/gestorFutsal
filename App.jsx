@@ -132,6 +132,7 @@ export default function App() {
   const [libLoaded, setLibLoaded] = useState(false);
   const [sesionActiva, setSesionActiva] = useState(null);
 
+  /* ===================== INIT FIREBASE ===================== */
   useEffect(() => {
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
@@ -148,6 +149,7 @@ export default function App() {
     return onAuthStateChanged(auth, setUsuario);
   }, []);
 
+  /* ===================== CARGA ZXING ===================== */
   useEffect(() => {
     if (escaneando && !libLoaded) {
       const script = document.createElement('script');
@@ -158,6 +160,7 @@ export default function App() {
     }
   }, [escaneando, libLoaded]);
 
+  /* ===================== SNAPSHOTS ===================== */
   useEffect(() => {
     if (!usuario || !db || !categoriaSel) return;
     
@@ -241,9 +244,7 @@ export default function App() {
       nombreMadre: formData.get('nombreMadre'),
       fotoPerfil: fotoPerfilBase64 || jugadoraEdit?.fotoPerfil || '',
       fotoDni: fotoDniBase64 || jugadoraEdit?.fotoDni || '',
-      activities: jugadoraEdit?.activities || { attendance: [], matches: [], drills: [], payments: [] },
       data: { dni: formData.get('dni'), health: formData.get('health') || '' },
-      stats: jugadoraEdit?.stats || { behavior: 5, theory: 5 },
       salud_profunda: {
         patologias: formData.get('patologias'),
         alergias: formData.get('alergias'),
@@ -253,6 +254,8 @@ export default function App() {
         telEmergencia: formData.get('telEmergencia'),
         grupoSanguineo: formData.get('grupoSanguineo'),
       },
+      activities: jugadoraEdit?.activities || { attendance: [], matches: [], drills: [], payments: [] },
+      stats: jugadoraEdit?.stats || { behavior: 5, theory: 5 }
     };
 
     try {
@@ -298,7 +301,7 @@ export default function App() {
     try {
       await setDoc(doc(db, 'artifacts', appId, 'users', usuario.uid, 'daily_plans', `${categoriaSel.id}_${hoyId}`), data);
       mostrarAviso("Pizarra Actualizada");
-    } catch (e) { mostrarAviso("Error al guardar pizarra"); }
+    } catch (e) { mostrarAviso("Error pizarra"); }
   };
 
   const eliminarJugadora = async (id) => {
@@ -313,7 +316,7 @@ export default function App() {
   const Header = ({ title, sub, onBack, action }) => (
     <header className="sticky top-0 z-40 bg-white shadow-sm border-b p-4 flex items-center justify-between">
       <div className="flex items-center gap-3">
-        {onBack && <button onClick={onBack} className="p-2 bg-slate-100 rounded-full active:scale-90"><ChevronLeft size={20} /></button>}
+        {onBack && <button onClick={onBack} className="p-2 bg-slate-100 rounded-full active:scale-90 transition-transform"><ChevronLeft size={20} /></button>}
         <div>
           <h1 className="text-lg font-black text-slate-950 uppercase italic tracking-tighter leading-none">{title}</h1>
           {sub && <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{sub}</p>}
@@ -330,10 +333,8 @@ export default function App() {
           <h3 className="font-black uppercase tracking-widest text-xs italic">Ficha Administrativa</h3>
           <button onClick={() => { setMostrarForm(false); setJugadoraEdit(null); setFotoDniBase64(null); setFotoPerfilBase64(null); }} className="text-2xl font-bold">×</button>
         </div>
-        <form onSubmit={guardarJugadora} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
-          <button type="button" onClick={() => setEscaneando(true)} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest">
-            📷 ESCANEAR BARRAS DNI
-          </button>
+        <form onSubmit={guardarJugadora} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto text-slate-900">
+          <button type="button" onClick={() => setEscaneando(true)} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest">📷 ESCANEAR BARRAS DNI</button>
           
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
@@ -348,15 +349,14 @@ export default function App() {
                   }
                 }} className="hidden" id="foto-perfil-input" />
               <label htmlFor="foto-perfil-input" className="w-full h-32 bg-indigo-50 rounded-2xl border-2 border-dashed border-indigo-200 flex flex-col items-center justify-center cursor-pointer overflow-hidden text-center">
-                {fotoPerfilBase64 || jugadoraEdit?.fotoPerfil ? <img src={fotoPerfilBase64 || jugadoraEdit?.fotoPerfil} className="w-full h-full object-cover" /> : <span className="text-[10px] font-black text-indigo-400 uppercase p-2">Subir Foto Jugadora</span>}
+                {fotoPerfilBase64 || jugadoraEdit?.fotoPerfil ? <img src={fotoPerfilBase64 || jugadoraEdit?.fotoPerfil} className="w-full h-full object-cover" /> : <span className="text-[10px] font-black text-indigo-400 uppercase p-2">Galería</span>}
               </label>
             </div>
-
             <div className="space-y-1">
               <label className="text-[10px] font-black text-slate-400 uppercase ml-2">Foto DNI</label>
               <input type="file" accept="image/*" onChange={handleFotoDni} className="hidden" id="foto-dni-input" />
               <label htmlFor="foto-dni-input" className="w-full h-32 bg-slate-100 rounded-2xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center cursor-pointer overflow-hidden text-center">
-                {fotoDniBase64 || jugadoraEdit?.fotoDni ? <img src={fotoDniBase64 || jugadoraEdit?.fotoDni} className="w-full h-full object-cover opacity-50" /> : <span className="text-[10px] font-black text-slate-400 uppercase p-2">Subir Foto DNI</span>}
+                {fotoDniBase64 || jugadoraEdit?.fotoDni ? <img src={fotoDniBase64 || jugadoraEdit?.fotoDni} className="w-full h-full object-cover opacity-50" /> : <span className="text-[10px] font-black text-slate-400 uppercase p-2">Galería DNI</span>}
               </label>
             </div>
           </div>
@@ -377,11 +377,13 @@ export default function App() {
             <input name="contactoEmergencia" defaultValue={jugadoraEdit?.salud_profunda?.contactoEmergencia} placeholder="Contacto Emergencia" className="w-full bg-slate-100 p-4 rounded-2xl border-none font-bold" />
             <input name="telEmergencia" defaultValue={jugadoraEdit?.salud_profunda?.telEmergencia} placeholder="Tel. Emergencia" className="w-full bg-slate-100 p-4 rounded-2xl border-none font-bold" />
           </div>
-          <button type="submit" className="w-full bg-green-600 text-white py-5 rounded-2xl font-black uppercase text-xs shadow-xl active:scale-95"> {jugadoraEdit ? 'ACTUALIZAR FICHA' : 'CREAR JUGADORA'} </button>
+          <button type="submit" className="w-full bg-green-600 text-white py-5 rounded-2xl font-black uppercase text-xs shadow-xl active:scale-95 transition-transform"> {jugadoraEdit ? 'ACTUALIZAR FICHA' : 'CREAR JUGADORA'} </button>
         </form>
       </div>
     </div>
   );
+
+  /* ===================== RENDER VISTAS ===================== */
 
   if (vista === 'inicio') {
     return (
@@ -411,13 +413,13 @@ export default function App() {
 
   if (vista === 'categoria' && categoriaSel) {
     return (
-      <div className="flex flex-col h-screen bg-white">
+      <div className="flex flex-col h-screen bg-white text-slate-900">
         <Header title={categoriaSel.nombre} sub={categoriaSel.edades} onBack={() => setVista('inicio')} action={<button onClick={() => { setJugadoraEdit(null); setMostrarForm(true); }} className="bg-rose-600 text-white px-4 py-2 rounded-xl font-black text-[10px] tracking-widest shadow-xl">AGREGAR</button>} />
         
         <div className="p-4 grid grid-cols-3 gap-2 mb-6">
           <button onClick={() => {
              const hoy = new Date().toISOString().split('T')[0];
-             setSesionActiva({ date: hoy, category: categoriaSel.id, parts: [{ name: 'Físico', duration: 10 }, { name: 'Técnico', duration: 15 }, { name: 'Pelota Parada', duration: 10 }, { name: 'Partido', duration: 25 }], attendance: {}, result: '', setPieceNotes: '' });
+             setSesionActiva({ date: hoy, category: categoriaSel.id, parts: [{ name: 'Físico', duration: 10 }, { name: 'Técnico', duration: 15 }, { name: 'Estrategia', duration: 10 }, { name: 'Partido', duration: 25 }], attendance: {}, result: '', setPieceNotes: '' });
              setVista('planificador');
           }} className="bg-slate-900 text-white p-4 rounded-[28px] flex flex-col items-center justify-center gap-1 shadow-md active:scale-95"><Calendar size={20} /><span className="text-[8px] font-black uppercase">Sesión</span></button>
           
@@ -470,16 +472,16 @@ export default function App() {
   if (vista === 'plan_diario') {
     const youtubeId = getYoutubeId(pizarraHoy?.videoLink);
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col">
+      <div className="min-h-screen bg-slate-50 flex flex-col text-slate-900">
         <Header title="Pizarra del Día" sub={categoriaSel.nombre} onBack={() => setVista('categoria')} />
-        <div className="p-4 space-y-6 pb-20 overflow-y-auto text-slate-900">
+        <div className="p-4 space-y-6 pb-20 overflow-y-auto">
           <section className="bg-white p-6 rounded-[40px] shadow-sm border border-slate-100">
-            <h3 className="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest">Publicar Trabajo</h3>
-            <form onSubmit={guardarPizarra} className="space-y-4">
+            <h3 className="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest italic">Cargar Trabajo Diario</h3>
+            <form onSubmit={guardarPizarra} className="space-y-4 text-slate-900">
               <input name="titulo" defaultValue={pizarraHoy?.title} placeholder="Título de la sesión" className="w-full bg-slate-100 p-4 rounded-2xl font-bold text-xs border-none" required />
               <textarea name="description" defaultValue={pizarraHoy?.description} placeholder="Detalle de los ejercicios..." className="w-full bg-slate-100 p-4 rounded-2xl font-bold text-xs h-32 border-none" required />
-              <input name="link" defaultValue={pizarraHoy?.videoLink} placeholder="Link de Video (YouTube)" className="w-full bg-slate-100 p-4 rounded-2xl font-bold text-xs border-none" />
-              <button type="submit" className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest">Publicar para los profes</button>
+              <input name="link" defaultValue={pizarraHoy?.videoLink} placeholder="Link Video YouTube" className="w-full bg-slate-100 p-4 rounded-2xl font-bold text-xs border-none" />
+              <button type="submit" className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg">Publicar Pizarra</button>
             </form>
           </section>
 
@@ -504,7 +506,7 @@ export default function App() {
             <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-4">Diagrama de Sesión</h3>
             <div className="space-y-3">
               {sesionActiva?.parts?.map((part, idx) => (
-                <div key={idx} className="bg-slate-50 p-4 rounded-2xl flex items-center justify-between">
+                <div key={idx} className="bg-slate-50 p-4 rounded-2xl flex items-center justify-between shadow-sm">
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 bg-rose-600 text-white rounded-xl flex items-center justify-center font-black text-sm">{part.duration}'</div>
                     <span className="font-black text-slate-900 uppercase italic text-xs tracking-tight">{part.name}</span>
@@ -514,11 +516,11 @@ export default function App() {
             </div>
           </section>
           <section className="bg-white p-6 rounded-[40px] shadow-sm border border-slate-100">
-            <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-4">Pelota Parada</h3>
-            <textarea className="w-full bg-slate-50 p-4 rounded-3xl border-none font-bold text-xs" placeholder="Ej: Corner corto 'Flecha'..." value={sesionActiva?.setPieceNotes} onChange={(e) => setSesionActiva({...sesionActiva, setPieceNotes: e.target.value})} />
+            <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-4 italic">Notas Pelota Parada</h3>
+            <textarea className="w-full bg-slate-50 p-4 rounded-3xl border-none font-bold text-xs" placeholder="Ej: Saque corto esquina..." value={sesionActiva?.setPieceNotes} onChange={(e) => setSesionActiva({...sesionActiva, setPieceNotes: e.target.value})} />
           </section>
           <section className="space-y-3">
-            <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-4 italic">Asistencia Rápida</h3>
+            <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-4 italic">Presentes Hoy</h3>
             <div className="grid grid-cols-1 gap-2">
               {jugadoras.map(p => (
                 <button key={p.id} onClick={() => {
@@ -537,7 +539,7 @@ export default function App() {
                await addDoc(collection(db, 'artifacts', appId, 'users', usuario.uid, 'trainings'), { ...sesionActiva, createdAt: Date.now() });
                mostrarAviso("Sesión guardada"); setVista('categoria');
              } catch (e) { mostrarAviso("Error al guardar"); }
-          }} className="w-full bg-slate-950 text-white py-6 rounded-[32px] font-black uppercase text-[11px] tracking-widest shadow-2xl active:scale-95">GUARDAR ENTRENAMIENTO</button>
+          }} className="w-full bg-slate-950 text-white py-6 rounded-[32px] font-black uppercase text-[11px] tracking-widest shadow-2xl active:scale-95 transition-all">GUARDAR ENTRENAMIENTO</button>
         </div>
       </div>
     );
@@ -545,30 +547,37 @@ export default function App() {
 
   if (vista === 'registro_rapido') {
     const playersInCat = jugadoras.filter(p => p.category === categoriaSel.id);
+    const fechaArgentina = new Date().toLocaleDateString('es-AR');
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col text-slate-900">
-        <Header title={`Control ${pestanaRegistro}`} sub={categoriaSel.nombre} onBack={() => setVista('categoria')} />
+        <Header title={`Control ${pestanaRegistro}`} sub={`${categoriaSel.nombre} - ${fechaArgentina}`} onBack={() => setVista('categoria')} />
         <div className="p-4 space-y-4 pb-24 overflow-y-auto">
           {playersInCat.map(p => (
             <div key={p.id} className="bg-white p-6 rounded-[40px] shadow-sm border border-slate-100">
-              <p className="text-xl font-black text-slate-900 mb-6 uppercase italic border-b pb-2">{p.name}</p>
+              <p className="text-xl font-black text-slate-900 mb-6 uppercase italic border-b pb-2 tracking-tighter">{p.name}</p>
+              
               {pestanaRegistro === 'asistencia' && (
                 <div className="grid grid-cols-2 gap-2">
                   {TIPOS_ASISTENCIA.map(s => <button key={s.id} onClick={() => guardarActividad(p.id, 'attendance', { status: s.id, etiqueta: s.etiqueta })} className={`${s.color} text-white py-5 rounded-3xl text-[10px] font-black uppercase shadow-lg active:scale-95 transition-all border-b-4 border-black/20`}>{s.etiqueta}</button>)}
                 </div>
               )}
+
               {pestanaRegistro === 'pagos' && (
                 <div className="grid grid-cols-2 gap-2">
-                  {TIPOS_FINANZAS.map(f => <button key={f.id} onClick={() => { const m = prompt(`Monto ${f.etiqueta}:`); if(m) guardarActividad(p.id, 'payments', { tipo: f.id, etiqueta: f.etiqueta, monto: parseFloat(m) }); }} className="bg-indigo-50 text-indigo-900 p-5 rounded-[32px] flex flex-col items-center border-2 border-indigo-100 active:bg-indigo-200 shadow-sm"><span className="text-3xl mb-1">{f.icono}</span><span className="text-[10px] font-black uppercase">{f.etiqueta}</span></button>)}
+                  {TIPOS_FINANZAS.map(f => <button key={f.id} onClick={() => { const m = prompt(`Monto para ${f.etiqueta}:`); if(m) guardarActividad(p.id, 'payments', { tipo: f.id, etiqueta: f.etiqueta, monto: parseFloat(m) }); }} className="bg-indigo-50 text-indigo-900 p-5 rounded-[32px] flex flex-col items-center border-2 border-indigo-100 active:bg-indigo-200 transition-all shadow-sm"><span className="text-3xl mb-1">{f.icono}</span><span className="text-[10px] font-black uppercase">{f.etiqueta}</span></button>)}
                 </div>
               )}
+
               {pestanaRegistro === 'ejercicios' && (
                 <div className="grid grid-cols-2 gap-2">
-                  {TIPOS_EJERCICIO.map(d => <button key={d.id} onClick={() => { const n = prompt(`Resultado ${d.etiqueta}:`); if(n) guardarActividad(p.id, 'drills', { tipo: d.id, etiqueta: d.etiqueta, nota: n }); }} className={`${d.color} text-white p-6 rounded-[32px] flex flex-col items-center shadow-lg active:scale-95`}><span className="text-3xl mb-1">{d.icono}</span><span className="text-[10px] font-black uppercase">{d.etiqueta}</span></button>)}
+                  {TIPOS_EJERCICIO.map(d => <button key={d.id} onClick={() => { const n = prompt(`Resultado de ${d.etiqueta}:`); if(n) guardarActividad(p.id, 'drills', { tipo: d.id, etiqueta: d.etiqueta, nota: n }); }} className={`${d.color} text-white p-6 rounded-[32px] flex flex-col items-center shadow-lg active:scale-95 transition-transform`}><span className="text-3xl mb-1">{d.icono}</span><span className="text-[10px] font-black uppercase">{d.etiqueta}</span></button>)}
                 </div>
               )}
+
               {pestanaRegistro === 'partidos' && (
-                <button onClick={() => { const g = prompt("Goles:"); const m = prompt("Minutos:"); if(g || m) guardarActividad(p.id, 'matches', { goles: g, min: m }); }} className="w-full bg-slate-900 text-white py-6 rounded-[32px] font-black text-[11px] uppercase tracking-widest active:scale-95 shadow-xl transition-all"> REGISTRAR ESTADÍSTICAS </button>
+                <div className="space-y-2">
+                   <button onClick={() => { const g = prompt("Goles:"); const m = prompt("Minutos:"); if(g || m) guardarActividad(p.id, 'matches', { goles: g, min: m, etiqueta: 'Partido' }); }} className="w-full bg-slate-950 text-white py-6 rounded-[32px] font-black text-[11px] uppercase tracking-widest active:scale-95 shadow-xl">CARGAR ESTADÍSTICAS JUEGO</button>
+                </div>
               )}
             </div>
           ))}
@@ -580,46 +589,43 @@ export default function App() {
   if (vista === 'detalle_jugadora' && jugadoraSeleccionada) {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col text-slate-900">
-        <Header title="Ficha Jugadora" onBack={() => setVista('categoria')} />
+        <Header title="Ficha Integral" onBack={() => setVista('categoria')} />
         <div className="p-4 space-y-6 pb-20 overflow-y-auto flex-grow">
           <div className="bg-white p-8 rounded-[48px] shadow-xl flex flex-col items-center text-center border border-slate-100">
             <div className="w-40 h-40 bg-indigo-50 rounded-[40px] border-4 border-white shadow-2xl overflow-hidden mb-4 rotate-2">
               {jugadoraSeleccionada?.fotoPerfil ? <img src={jugadoraSeleccionada.fotoPerfil} className="w-full h-full object-cover" /> : jugadoraSeleccionada.fotoDni ? <img src={jugadoraSeleccionada.fotoDni} className="w-full h-full object-cover" /> : <span className="opacity-20 text-8xl p-8 block">👤</span>}
             </div>
-            <h3 className="text-3xl font-black text-slate-900 uppercase leading-none italic">{jugadoraSeleccionada?.name}</h3>
-            <button onClick={() => { setJugadoraEdit(jugadoraSeleccionada); setMostrarForm(true); }} className="mt-4 w-full bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest active:scale-95 shadow-lg">Editar Ficha</button>
+            <h3 className="text-3xl font-black text-slate-900 uppercase leading-none italic tracking-tighter">{jugadoraSeleccionada?.name}</h3>
+            <p className="text-indigo-600 font-black text-[10px] uppercase tracking-[0.4em] mt-2 italic">DNI: {jugadoraSeleccionada.dni || 'PENDIENTE'}</p>
+            <button onClick={() => { setJugadoraEdit(jugadoraSeleccionada); setMostrarForm(true); }} className="mt-4 w-full bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest active:scale-95 shadow-lg">EDITAR FICHA</button>
           </div>
           
           <div className="bg-white p-6 rounded-[40px] border border-slate-100 space-y-4 shadow-sm">
-            <div className="flex justify-between items-center"><span className="text-[10px] font-black text-slate-400 uppercase">Teléfono</span><span className="text-sm font-bold text-slate-700">{jugadoraSeleccionada.telefono || 'N/A'}</span></div>
-            <div className="flex flex-col border-t pt-3"><span className="text-[9px] font-black text-slate-400 uppercase mb-1">Dirección</span><span className="text-sm font-bold text-slate-700 leading-tight">{jugadoraSeleccionada.direccion || 'N/A'}</span></div>
+            <div className="flex justify-between items-center"><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Teléfono</span><span className="text-sm font-bold text-slate-700 tracking-tight">{jugadoraSeleccionada.telefono || 'N/A'}</span></div>
+            <div className="flex flex-col border-t pt-3"><span className="text-[9px] font-black text-slate-400 uppercase mb-1 tracking-widest">Dirección</span><span className="text-sm font-bold text-slate-700 leading-tight">{jugadoraSeleccionada.direccion || 'N/A'}</span></div>
           </div>
 
           <div className="bg-white rounded-[32px] border-2 border-rose-500 overflow-hidden shadow-xl text-slate-900">
-            <div className="bg-rose-500 p-4 flex justify-between items-center text-white"><span className="font-black text-xs uppercase italic">Ficha Médica</span><span className="bg-white text-rose-600 px-3 py-1 rounded-full font-black text-xs">🩸 {jugadoraSeleccionada.salud_profunda?.grupoSanguineo || 'S/D'}</span></div>
+            <div className="bg-rose-500 p-4 flex justify-between items-center text-white"><span className="font-black text-xs uppercase italic tracking-widest">⚠️ Ficha Médica</span><span className="bg-white text-rose-600 px-3 py-1 rounded-full font-black text-xs">🩸 {jugadoraSeleccionada.salud_profunda?.grupoSanguineo || 'S/D'}</span></div>
             <div className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4 text-center">
-                <div className="bg-rose-50 p-2 rounded-xl"><p className="text-[9px] font-black text-rose-400 uppercase">Alergias</p><p className="text-xs font-bold text-slate-800">{jugadoraSeleccionada.salud_profunda?.alergias || 'Ninguna'}</p></div>
-                <div className="bg-rose-50 p-2 rounded-xl"><p className="text-[9px] font-black text-rose-400 uppercase">Patologías</p><p className="text-xs font-bold text-slate-800">{jugadoraSeleccionada.salud_profunda?.patologias || 'Ninguna'}</p></div>
+              <div className="grid grid-cols-2 gap-4">
+                <div><p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Alergias</p><p className="text-sm font-bold text-slate-800">{jugadoraSeleccionada.salud_profunda?.alergias || 'Ninguna'}</p></div>
+                <div><p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Patologías</p><p className="text-sm font-bold text-slate-800">{jugadoraSeleccionada.salud_profunda?.patologias || 'Ninguna'}</p></div>
               </div>
-              <div className="bg-rose-100 p-4 rounded-2xl border border-rose-200">
-                <p className="text-[9px] font-black text-rose-600 uppercase mb-1">Urgencias:</p>
-                <p className="text-lg font-black text-slate-900 leading-none">{jugadoraSeleccionada.salud_profunda?.contactoEmergencia || 'S/C'}</p>
-                <p className="text-sm font-bold text-rose-600 mt-1">{jugadoraSeleccionada.salud_profunda?.telEmergencia || ''}</p>
-              </div>
+              <div className="bg-rose-50 p-4 rounded-2xl border border-rose-100"><p className="text-[9px] font-black text-rose-600 uppercase mb-1 tracking-widest">En caso de Urgencia:</p><p className="text-lg font-black text-slate-900 leading-none">{jugadoraSeleccionada.salud_profunda?.contactoEmergencia || 'S/C'}</p><p className="text-sm font-bold text-rose-600 mt-1">{jugadoraSeleccionada.salud_profunda?.telEmergencia || ''}</p></div>
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-[40px] border border-slate-100 shadow-sm">
-             <h4 className="text-[10px] font-black text-slate-400 uppercase mb-3 italic">Últimas Asistencias</h4>
+          <div className="bg-white p-6 rounded-[40px] border border-slate-100 shadow-sm text-slate-900">
+             <h4 className="text-[10px] font-black text-slate-400 uppercase mb-3 italic tracking-widest">Historial Asistencias</h4>
              <div className="space-y-2">
                 {jugadoraSeleccionada.activities?.attendance?.slice(-5).reverse().map((asist, i) => (
                   <div key={i} className="flex justify-between items-center py-2 border-b border-slate-50 last:border-0">
-                    <div className="flex flex-col"><span className="text-[10px] font-bold text-slate-800 uppercase">{asist.fechaTexto}</span><span className="text-[8px] text-slate-400 uppercase">{asist.diaSemana}</span></div>
+                    <div className="flex flex-col"><span className="text-[10px] font-bold text-slate-800 uppercase">{asist.fechaTexto}</span><span className="text-[8px] text-slate-400 uppercase italic">{asist.diaSemana}</span></div>
                     <span className={`text-[8px] font-black uppercase px-2 py-1 rounded-full ${asist.status === 'presente' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}`}>{asist.etiqueta}</span>
                   </div>
                 ))}
-                {!jugadoraSeleccionada.activities?.attendance?.length && <p className="text-center text-[9px] text-slate-300 font-bold uppercase italic p-4">Sin registros aún</p>}
+                {!jugadoraSeleccionada.activities?.attendance?.length && <p className="text-center text-[9px] text-slate-300 font-bold uppercase italic p-4">Sin registros</p>}
              </div>
           </div>
           <button onClick={() => eliminarJugadora(jugadoraSeleccionada.id)} className="w-full bg-red-50 text-red-600 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest active:scale-95 mb-10 shadow-sm">Eliminar Atleta</button>
@@ -633,7 +639,7 @@ export default function App() {
        {mensaje && <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] bg-slate-900 text-white px-8 py-4 rounded-full shadow-2xl">{mensaje}</div>}
        <div className="flex flex-col items-center gap-4">
          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-         Conectando Sistema...
+         Conectando...
        </div>
     </div>
   );
