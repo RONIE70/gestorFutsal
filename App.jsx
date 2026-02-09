@@ -585,7 +585,7 @@ useEffect(() => {
     <div className="flex justify-around bg-white py-3 border-b">
   <button
     onClick={() => setVista('historial')}
-    className="bg-amber text-slate-600 p-4 rounded-[24px] flex flex-col items-center justify-center gap-2 border-2 border-slate-100 shadow-lg shadow-slate-100 active:scale-95 transition-all"
+    className="bg-amber-500 text-slate-600 p-4 rounded-[24px] flex flex-col items-center justify-center gap-2 border-2 border-slate-100 shadow-lg shadow-slate-100 active:scale-95 transition-all"
   >
   <Calendar size={24} className="text-rose-500" />
   <span className="text-[9px] font-black uppercase tracking-widest">  Historial</span>
