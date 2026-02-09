@@ -70,6 +70,14 @@ const TIPOS_FINANZAS = [
   { id: 'otros', etiqueta: 'Otros', icono: '➕' },
 ];
 
+// Helper para extraer ID de Youtube
+const getYoutubeId = (url) => {
+  if (!url) return null;
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[2].length === 11) ? match[2] : null;
+};
+
 export default function App() {
 
   const readerRef = useRef(null);
@@ -80,6 +88,7 @@ export default function App() {
   const [usuario, setUsuario] = useState(null);
   const [db, setDb] = useState(null);
   const [jugadoras, setJugadoras] = useState([]);
+  const [pizarraHoy, setPizarraHoy] = useState(null);
   const [vista, setVista] = useState('inicio'); 
   const [categoriaSel, setCategoriaSel] = useState(null);
   const [jugadoraEdit, setJugadoraEdit] = useState(null);
@@ -103,92 +112,73 @@ export default function App() {
     return onAuthStateChanged(auth, setUsuario);
   }, []);
 
+  /* ===================== CARGA ZXING ===================== */
+  useEffect(() => {
+    if (escaneando && !libLoaded) {
+      const script = document.createElement('script');
+      script.src = 'https://unpkg.com/@zxing/browser@0.1.5/dist/index.js';
+      script.async = true;
+      script.onload = () => setLibLoaded(true);
+      document.body.appendChild(script);
+    }
+  }, [escaneando, libLoaded]);
 
- /*---------------------------------------------*/
+  /* ===================== SNAPSHOTS ===================== */
+  useEffect(() => {
+    if (!usuario || !db || !categoriaSel) return;
+    
+    // Players Snapshot
+    const unsubP = onSnapshot(query(collection(db, 'artifacts', appId, 'users', usuario.uid, 'players'), where("category", "==", categoriaSel.id)), (snap) => {
+      setJugadoras(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
+    // Pizarra Snapshot (Hoy)
+    const hoyId = new Date().toISOString().split('T')[0];
+    const unsubPizarra = onSnapshot(doc(db, 'artifacts', appId, 'users', usuario.uid, 'daily_plans', `${categoriaSel.id}_${hoyId}`), (doc) => {
+      if (doc.exists()) setPizarraHoy(doc.data());
+      else setPizarraHoy(null);
+    });
+
+    return () => { unsubP(); unsubPizarra(); };
+  }, [usuario, db, categoriaSel]);  
+
+
+  /* ===================== LÓGICA ESCÁNER ===================== */
   const iniciarCamara = async () => {
-  if (!readerRef.current) return;
-
-  console.log('🎥 Iniciando cámara PDF417 (constraints)');
-
-  try {
-    const controls = await readerRef.current.decodeFromConstraints(
-      {
-        audio: false,
-        video: {
-          facingMode: { ideal: 'environment' },
-          width: { ideal: 1920 },
-          height: { ideal: 1080 }
-          // focusMode NO es estándar, algunos browsers lo ignoran
+    if (!window.ZXingBrowser || !libLoaded) return;
+    if (!readerRef.current) readerRef.current = new window.ZXingBrowser.BrowserPDF417Reader();
+    try {
+      const controls = await readerRef.current.decodeFromConstraints(
+        { audio: false, video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } },
+        'reader',
+        (result) => {
+          if (!result) return;
+          const texto = result.getText();
+          if (texto === ultimoTextoRef.current) lecturasIgualesRef.current++;
+          else { ultimoTextoRef.current = texto; lecturasIgualesRef.current = 1; }
+          if (lecturasIgualesRef.current >= 2) {
+            const datos = parsearDNIArgentino(texto);
+            if (datos) {
+              setJugadoraEdit(prev => ({ ...prev, name: `${datos.nombre} ${datos.apellido}`, dni: datos.dni, birthDate: datos.fechaNacimiento }));
+              mostrarAviso("DNI Leído");
+              detenerEscaneo();
+            }
+          }
         }
-      },
-      'reader',
-      (result) => {
-        if (!result) return;
-
-        console.log('📦 RESULTADO:', result);
-
-        const texto = result.getText();
-
-        if (texto === ultimoTextoRef.current) {
-          lecturasIgualesRef.current++;
-        } else {
-          ultimoTextoRef.current = texto;
-          lecturasIgualesRef.current = 1;
-        }
-
-        console.log('🔁 Coincidencias:', lecturasIgualesRef.current);
-
-        if (lecturasIgualesRef.current >= 2) {
-          procesarPDF417DNI(texto);
-          detenerEscaneo();
-        }
-      }
-    );
-
-    scannerRef.current = controls;
-    console.log('📡 ZXing escaneando');
-
-  } catch (e) {
-    console.error('❌ Error cámara:', e);
-    mostrarAviso('No se pudo abrir la cámara');
-    detenerEscaneo();
-  }
-};
-
-
-const detenerEscaneo = () => { 
-  if (scannerRef.current) { scannerRef.current.stop(); // ✅ NO reset 
-  scannerRef.current = null; }
-  setEscaneando(false); };
-
-  /* ===================== ZXING SCANNER ===================== */
-
- useEffect(() => {
-  if (!escaneando) return;
-
-  readerRef.current = new BrowserPDF417Reader();
-
-  requestAnimationFrame(() => {
-    iniciarCamara();
-  });
-
-  return () => {
-    if (scannerRef.current) {
-      scannerRef.current.stop();
-      scannerRef.current = null;
-    }
-
-    if (readerRef.current) {
-      readerRef.current.reset();
-      readerRef.current = null;
-    }
-
-    ultimoTextoRef.current = null;
-    lecturasIgualesRef.current = 0;
+      );
+      scannerRef.current = controls;
+    } catch (e) { detenerEscaneo(); }
   };
-}, [escaneando]);
 
+  const detenerEscaneo = () => { 
+    if (scannerRef.current) { scannerRef.current.stop(); scannerRef.current = null; }
+    setEscaneando(false); 
+  };
 
+  useEffect(() => {
+    if (escaneando && libLoaded) iniciarCamara();
+    return () => detenerEscaneo();
+  }, [escaneando, libLoaded]);
 
 /* ===================== DNI PROCESS ===================== */
 
@@ -207,6 +197,7 @@ const detenerEscaneo = () => {
   // 👉 Acá podés guardar en estado, enviar a Firebase, etc.
   // setDniData(datos);
 };
+
 
   useEffect(() => {
     if (!usuario || !db || !categoriaSel) return;
@@ -315,6 +306,25 @@ const detenerEscaneo = () => {
       console.error(e);
       mostrarAviso("Error al guardar registro");
     }
+  };
+
+   const guardarPizarra = async (e) => {
+    e.preventDefault();
+    if (!usuario || !db) return;
+    const formData = new FormData(e.target);
+    const hoyId = new Date().toISOString().split('T')[0];
+    const data = {
+      title: formData.get('titulo'),
+      description: formData.get('descripcion'),
+      videoLink: formData.get('link'),
+      date: hoyId,
+      category: categoriaSel.id,
+      updatedAt: Date.now()
+    };
+    try {
+      await setDoc(doc(db, 'artifacts', appId, 'users', usuario.uid, 'daily_plans', `${categoriaSel.id}_${hoyId}`), data);
+      mostrarAviso("Pizarra Actualizada");
+    } catch (e) { mostrarAviso("Error al guardar pizarra"); }
   };
 
   const eliminarJugadora = async (id) => {
@@ -463,111 +473,229 @@ const detenerEscaneo = () => {
 
       {mostrarForm && <FormularioJugadora />}
 
-      {/* VISTA INICIO */}
-      {vista === 'inicio' && (
-        <div className="p-6 max-w-lg mx-auto">
-          <header className="py-12 text-center flex flex-col items-center">
-  {/* ESCUDO DEL CLUB */}
-  <div className="mb-6 relative">
-    <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-xl border-2 border-indigo-600 overflow-hidden">
-      {/* Reemplaza la URL de abajo por el link de tu escudo o logo */}
-      <img 
-        src='/logo.jpg' 
-        alt="Escudo Club" 
-        className="w-20 h-20 object-contain"
-        onError={(e) => e.target.src = "https://cdn-icons-png.flaticon.com/512/53/53254.png"} // Imagen de auxilio si falla el link
-      />
+{/* ===================== VISTAS ===================== */}
+
+/* ===================== VISTA INICIO ===================== */
+{vista === 'inicio' && (
+  <div className="min-h-screen bg-slate-50 p-6 flex flex-col items-center text-slate-900">
+    <header className="py-12 text-center flex flex-col items-center">
+      <div className="mb-6 relative">
+        <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-xl border-2 border-indigo-600 overflow-hidden">
+          <img
+            src="/logo.jpg"
+            alt="Escudo Club"
+            className="w-20 h-20 object-contain"
+            onError={(e) =>
+              (e.target.src =
+                "https://cdn-icons-png.flaticon.com/512/53/53254.png")
+            }
+          />
+        </div>
+        <div className="absolute -top-1 -right-1 bg-indigo-600 w-4 h-4 rounded-full border-2 border-white"></div>
+      </div>
+
+      <h1 className="text-5xl font-black text-slate-950 italic tracking-tighter leading-none mb-2">
+        FUTSAL<br />FEMENINO
+      </h1>
+      <div className="h-1.5 w-16 bg-indigo-600 mx-auto rounded-full mb-4 shadow-sm"></div>
+      <p className="text-slate-400 font-bold uppercase text-[9px] tracking-[0.3em]">
+        Gestión Deportiva Pro
+      </p>
+    </header>
+
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-lg">
+      {CATEGORIAS_EQUIPO.map(cat => (
+        <button
+          key={cat.id}
+          onClick={() => { setCategoriaSel(cat); setVista('categoria'); }}
+          className={`${cat.color} h-36 rounded-[40px] shadow-lg text-white flex flex-col items-center justify-center active:scale-95 transition-all border-b-8 border-black/20`}
+        >
+          <span className="text-2xl font-black uppercase tracking-tighter">{cat.nombre}</span>
+          <span className="text-[10px] font-bold opacity-70 uppercase tracking-widest">{cat.edades}</span>
+        </button>
+      ))}
     </div>
-    {/* Decoración opcional: un brillo pequeño */}
-    <div className="absolute -top-1 -right-1 bg-indigo-600 w-4 h-4 rounded-full border-2 border-white"></div>
   </div>
+)}
 
-  <h1 className="text-5xl font-black text-slate-950 italic tracking-tighter leading-none mb-2">FUTSAL<br/>FEMENINO</h1>
-  <div className="h-1.5 w-16 bg-indigo-600 mx-auto rounded-full mb-4 shadow-sm"></div>
-  <p className="text-slate-400 font-bold uppercase text-[9px] tracking-[0.3em]">Gestión Deportiva Pro</p>
-</header>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {CATEGORIAS_EQUIPO.map(cat => (
-              <button key={cat.id} onClick={() => { setCategoriaSel(cat); setVista('categoria'); }} className={`${cat.color} h-36 rounded-[40px] shadow-lg text-white flex flex-col items-center justify-center active:scale-95 transition-all border-b-8 border-black/20`}>
-                <span className="text-2xl font-black uppercase tracking-tighter">{cat.nombre}</span>
-                <span className="text-[10px] font-bold opacity-70 uppercase tracking-widest">{cat.edades}</span>
-              </button>
-            ))}
-          </div>
+/* ===================== VISTA CATEGORIA ===================== */
+{vista === 'categoria' && (
+  <div className="flex flex-col h-screen bg-white">
+
+    <Header
+      title={categoriaSel.nombre}
+      sub={categoriaSel.edades}
+      onBack={() => setVista('inicio')}
+      action={
+        <button
+          onClick={() => { setJugadoraEdit(null); setMostrarForm(true); }}
+          className="bg-rose-600 text-white px-4 py-2 rounded-xl font-black text-[10px] tracking-widest"
+        >
+          AGREGAR
+        </button>
+      }
+    />
+
+    <div className="flex-grow p-6 overflow-y-auto space-y-4 pb-36">
+      {jugadoras.length === 0 ? (
+        <div className="text-center py-20 text-slate-300">
+          <p className="font-black uppercase tracking-widest text-[10px] italic">
+            Sin atletas registradas
+          </p>
         </div>
-      )}
+      ) : (
+        jugadoras.filter(p => p && p.name).map(p => (
+          <div
+            key={p.id}
+            className="bg-white p-5 rounded-[32px] shadow-md border border-slate-200 flex justify-between items-center transition-all"
+          >
+            <div
+              className="flex-grow flex items-center gap-4"
+              onClick={() => { setJugadoraSeleccionada(p); setVista('detalle_jugadora'); }}
+            >
+              <div className="w-12 h-12 bg-slate-100 rounded-full overflow-hidden flex items-center justify-center border">
+                {p.fotoPerfil ? (
+                  <img src={p.fotoPerfil} className="w-full h-full object-cover" />
+                ) : p.fotoDni ? (
+                  <img src={p.fotoDni} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-xs">👤</span>
+                )}
+              </div>
 
-      {/* VISTA CATEGORIA */}
-      {vista === 'categoria' && (
-        <div className="flex flex-col h-screen">
-          <header className={`${categoriaSel.color} p-6 text-white shadow-xl flex justify-between items-center rounded-b-[48px] z-10 sticky top-0`}>
-            <button onClick={() => setVista('inicio')} className="bg-white/20 p-3 rounded-2xl active:scale-90">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7" /></svg>
-            </button>
-            <div className="text-center">
-              <h2 className="text-xl font-black uppercase tracking-widest leading-none mb-1">{categoriaSel.nombre}</h2>
-              <span className="text-[9px] font-black opacity-60 bg-black/10 px-2 py-0.5 rounded-full uppercase">{categoriaSel.edades}</span>
+              <div>
+                <p className="text-lg font-black text-slate-800 uppercase leading-none">{p.name}</p>
+                <p className="text-[10px] font-black text-indigo-500">ID: {p.dni}</p>
+              </div>
             </div>
-            <button onClick={() => { setJugadoraEdit(null); setMostrarForm(true); }} className="bg-white text-slate-900 px-5 py-2.5 rounded-2xl font-black text-[10px] shadow-xl active:scale-90 tracking-widest">
-              AGREGAR
-            </button>
-          </header>
 
-          <div className="flex-grow p-6 overflow-y-auto space-y-4 pb-36">
-  {jugadoras.length === 0 ? (
-    <div className="text-center py-20 text-slate-300">
-      <p className="font-black uppercase tracking-widest text-[10px] italic">Sin atletas registradas</p>
-    </div>
-  ) : (
-    /* Filtramos para que si hay un dato corrupto en la base no rompa el resto */
-    jugadoras.filter(p => p && p.name).map(p => (
-      <div key={p.id} className="bg-white p-5 rounded-[32px] shadow-md border border-slate-200 flex justify-between items-center transition-all hover:border-indigo-300">
-        <div className="flex-grow flex items-center gap-4" onClick={() => { setJugadoraSeleccionada(p); setVista('detalle_jugadora'); }}>
-          
-          {/* FOTO: Usa fotoPerfil y si no existe usa fotoDni que es lo que tenés en la base */}
-          <div className="w-12 h-12 bg-slate-100 rounded-full overflow-hidden flex items-center justify-center border border-slate-200">
-            {p.fotoPerfil ? (
-              <img src={p.fotoPerfil} className="w-full h-full object-cover" alt="Perfil" />
-            ) : p.fotoDni ? (
-              <img src={p.fotoDni} className="w-full h-full object-cover" alt="DNI" />
-            ) : (
-              <span className="text-xs">👤</span>
-            )}
-        </div>
-                    <div>
-                      <p className="text-lg font-black text-slate-800 uppercase tracking-tighter leading-none mb-1">{p.name}</p>
-                      <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">ID: {p.dni}</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2 ml-4">
-                    <button onClick={() => { setJugadoraEdit(p); setMostrarForm(true); }} className="p-3 bg-slate-100 rounded-xl text-slate-400 active:bg-indigo-100 active:text-indigo-600 transition-all">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                    </button>
-                    <button onClick={() => eliminarJugadora(p.id)} className="p-3 bg-red-50 rounded-xl text-red-400 active:bg-red-100 transition-all">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                    </button>
-                  </div>
-                </div>
-              ))
-            )}
+            <div className="flex gap-2">
+              <button onClick={() => { setJugadoraEdit(p); setMostrarForm(true); }}>✏️</button>
+              <button onClick={() => eliminarJugadora(p.id)}>🗑️</button>
+            </div>
           </div>
-
-          <footer className="bg-slate-950 p-4 grid grid-cols-4 gap-2 fixed bottom-0 left-0 right-0 border-t border-white/10 rounded-t-[48px] shadow-2xl z-40">
-            <button onClick={() => { setPestanaRegistro('asistencia'); setVista('registro_rapido'); }} className="flex flex-col items-center py-2 text-white active:scale-90 transition-transform">
-               <span className="text-2xl mb-1">📅</span> <span className="text-[8px] font-black uppercase tracking-widest opacity-70">Asistencia</span>
-            </button>
-            <button onClick={() => { setPestanaRegistro('partidos'); setVista('registro_rapido'); }} className="flex flex-col items-center py-2 text-white active:scale-90 transition-transform">
-               <span className="text-2xl mb-1">🏆</span> <span className="text-[8px] font-black uppercase tracking-widest opacity-70">Partidos</span>
-            </button>
-            <button onClick={() => { setPestanaRegistro('ejercicios'); setVista('registro_rapido'); }} className="flex flex-col items-center py-2 text-white active:scale-90 transition-transform">
-               <span className="text-2xl mb-1">🏋️</span> <span className="text-[8px] font-black uppercase tracking-widest opacity-70">Ejercicios</span>
-            </button>
-            <button onClick={() => { setPestanaRegistro('pagos'); setVista('registro_rapido'); }} className="flex flex-col items-center py-2 text-green-400 active:scale-90 transition-transform">
-               <span className="text-2xl mb-1">💵</span> <span className="text-[8px] font-black uppercase tracking-widest">$ Pagos</span>
-            </button>
-          </footer>
-        </div>
+        ))
       )}
+    </div>
+
+    <footer className="bg-slate-950 p-4 grid grid-cols-4 gap-2 fixed bottom-0 left-0 right-0 border-t border-white/10 rounded-t-[48px] shadow-2xl z-40">
+      <button onClick={() => { setPestanaRegistro('asistencia'); setVista('registro_rapido'); }} className="flex flex-col items-center py-2 text-white">
+        <span className="text-2xl">📅</span>
+        <span className="text-[8px] font-black uppercase opacity-70">Asistencia</span>
+      </button>
+      <button onClick={() => { setPestanaRegistro('partidos'); setVista('registro_rapido'); }} className="flex flex-col items-center py-2 text-white">
+        <span className="text-2xl">🏆</span>
+        <span className="text-[8px] font-black uppercase opacity-70">Partidos</span>
+      </button>
+      <button onClick={() => { setPestanaRegistro('ejercicios'); setVista('registro_rapido'); }} className="flex flex-col items-center py-2 text-white">
+        <span className="text-2xl">🏋️</span>
+        <span className="text-[8px] font-black uppercase opacity-70">Ejercicios</span>
+      </button>
+      <button onClick={() => { setPestanaRegistro('pagos'); setVista('registro_rapido'); }} className="flex flex-col items-center py-2 text-green-400">
+        <span className="text-2xl">💵</span>
+        <span className="text-[8px] font-black">$ Pagos</span>
+      </button>
+    </footer>
+  </div>
+)}
+
+/* ===================== VISTA PLAN_DIARIO ===================== */
+{vista === 'plan_diario' && (
+  <div className="min-h-screen bg-slate-50 flex flex-col">
+    <Header
+      title="Pizarra del Día"
+      sub={categoriaSel.nombre}
+      onBack={() => setVista('categoria')}
+    />
+
+    <div className="p-4 space-y-6 pb-20 overflow-y-auto text-slate-900">
+      <section className="bg-white p-6 rounded-[40px] shadow-sm border border-slate-100">
+        <h3 className="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest">
+          Publicar Trabajo
+        </h3>
+
+        <form onSubmit={guardarPizarra} className="space-y-4">
+          <input
+            name="titulo"
+            defaultValue={pizarraHoy?.title}
+            placeholder="Título de la sesión"
+            className="w-full bg-slate-100 p-4 rounded-2xl font-bold text-xs border-none"
+            required
+          />
+          <textarea
+            name="description"
+            defaultValue={pizarraHoy?.description}
+            placeholder="Detalle de los ejercicios..."
+            className="w-full bg-slate-100 p-4 rounded-2xl font-bold text-xs h-32 border-none"
+            required
+          />
+          <input
+            name="link"
+            defaultValue={pizarraHoy?.videoLink}
+            placeholder="Link de Video (YouTube)"
+            className="w-full bg-slate-100 p-4 rounded-2xl font-bold text-xs border-none"
+          />
+          <button
+            type="submit"
+            className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest"
+          >
+            Publicar para los profes
+          </button>
+        </form>
+      </section>
+    </div>
+  </div>
+)}
+
+/* ===================== VISTA PLANIFICADOR ===================== */
+{vista === 'planificador' && (
+  <div className="min-h-screen bg-slate-50 flex flex-col text-slate-900">
+    <Header
+      title="Planificador"
+      sub="Sesión de Entrenamiento"
+      onBack={() => setVista('categoria')}
+    />
+
+    <div className="p-4 space-y-6 pb-20 overflow-y-auto">
+      <section className="bg-white p-6 rounded-[40px] shadow-sm border border-slate-100">
+        <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-4">
+          Diagrama de Sesión
+        </h3>
+
+        <div className="space-y-3">
+          {sesionActiva?.parts?.map((part, idx) => (
+            <div key={idx} className="bg-slate-50 p-4 rounded-2xl flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 bg-rose-600 text-white rounded-xl flex items-center justify-center font-black text-sm">
+                  {part.duration}'
+                </div>
+                <span className="font-black text-slate-900 uppercase italic text-xs tracking-tight">
+                  {part.name}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <button
+        onClick={async () => {
+          try {
+            await addDoc(collection(db, 'artifacts', appId, 'users', usuario.uid, 'trainings'), { ...sesionActiva, createdAt: Date.now() });
+            mostrarAviso("Sesión guardada");
+            setVista('categoria');
+          } catch (e) {
+            mostrarAviso("Error al guardar");
+          }
+        }}
+        className="w-full bg-slate-950 text-white py-6 rounded-[32px] font-black uppercase text-[11px] tracking-widest shadow-2xl"
+      >
+        GUARDAR ENTRENAMIENTO
+      </button>
+    </div>
+  </div>
+)}
+
 
       {/* VISTA REGISTRO RÁPIDO */}
       {vista === 'registro_rapido' && (
