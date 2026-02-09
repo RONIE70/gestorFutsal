@@ -92,6 +92,41 @@ export default function App() {
   const [pizarraHoy, setPizarraHoy] = useState(null);
   const [libLoaded, setLibLoaded] = useState(false);
   const [sesionActiva, setSesionActiva] = useState(null);
+
+  const [vista, setVista] = useState('inicio'); 
+  const [categoriaSel, setCategoriaSel] = useState(null);
+  const [jugadoraEdit, setJugadoraEdit] = useState(null);
+  const [jugadoraSeleccionada, setJugadoraSeleccionada] = useState(null);
+  const [mostrarForm, setMostrarForm] = useState(false);
+  const [escaneando, setEscaneando] = useState(false);
+  const [pestanaRegistro, setPestanaRegistro] = useState('asistencia');
+  const [mensaje, setMensaje] = useState(null);
+  const [fotoDniBase64, setFotoDniBase64] = useState(null);
+  const [fotoPerfilBase64, setFotoPerfilBase64] = useState(null);
+
+
+    /* ===================== INIT FIREBASE ===================== */
+
+  useEffect(() => {
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const firestore = getFirestore(app);
+    setDb(firestore);
+    signInAnonymously(auth);
+    return onAuthStateChanged(auth, setUsuario);
+  }, []);
+
+  /* ===================== CARGA ZXING ===================== */
+  useEffect(() => {
+    if (escaneando && !libLoaded) {
+      const script = document.createElement('script');
+      script.src = 'https://unpkg.com/@zxing/browser@0.1.5/dist/index.js';
+      script.async = true;
+      script.onload = () => setLibLoaded(true);
+      document.body.appendChild(script);
+    }
+  }, [escaneando, libLoaded]);
+
   /* ===================== SNAPSHOTS ===================== */
   useEffect(() => {
   if (!usuario || !db || !categoriaSel) return;
@@ -135,41 +170,6 @@ export default function App() {
     unsubPizarra();
   };
 }, [usuario, db, categoriaSel]);
-
-
-  const [vista, setVista] = useState('inicio'); 
-  const [categoriaSel, setCategoriaSel] = useState(null);
-  const [jugadoraEdit, setJugadoraEdit] = useState(null);
-  const [jugadoraSeleccionada, setJugadoraSeleccionada] = useState(null);
-  const [mostrarForm, setMostrarForm] = useState(false);
-  const [escaneando, setEscaneando] = useState(false);
-  const [pestanaRegistro, setPestanaRegistro] = useState('asistencia');
-  const [mensaje, setMensaje] = useState(null);
-  const [fotoDniBase64, setFotoDniBase64] = useState(null);
-  const [fotoPerfilBase64, setFotoPerfilBase64] = useState(null);
-
-
-    /* ===================== INIT FIREBASE ===================== */
-
-  useEffect(() => {
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const firestore = getFirestore(app);
-    setDb(firestore);
-    signInAnonymously(auth);
-    return onAuthStateChanged(auth, setUsuario);
-  }, []);
-
-  /* ===================== CARGA ZXING ===================== */
-  useEffect(() => {
-    if (escaneando && !libLoaded) {
-      const script = document.createElement('script');
-      script.src = 'https://unpkg.com/@zxing/browser@0.1.5/dist/index.js';
-      script.async = true;
-      script.onload = () => setLibLoaded(true);
-      document.body.appendChild(script);
-    }
-  }, [escaneando, libLoaded]);
 
 
 
