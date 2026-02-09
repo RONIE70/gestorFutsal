@@ -719,7 +719,7 @@ useEffect(() => {
 
 {/* ===================== VISTA PLANIFICADOR ===================== */}
 {vista === 'planificador' && (
-  <div className="min-h-screen bg-slate-50 flex flex-col text-slate-900">
+  <div className="bg-slate-100 text-slate-800 p-4 rounded-[28px] flex flex-col items-center justify-center gap-1 shadow-md">
     <Header
       title="Planificador"
       sub="Sesión de Entrenamiento"
@@ -771,7 +771,7 @@ useEffect(() => {
 
 {/* ===================== VISTA HISTORIAL ===================== */}
 {vista === 'historial' && (
-  <div className="min-h-screen bg-slate-50 flex flex-col text-slate-900">
+  <div className="bg-indigo-600 text-white p-4 rounded-[28px] flex flex-col items-center justify-center gap-1 shadow-md">
     <Header
       title="Historial"
       sub={categoriaSel.nombre}
