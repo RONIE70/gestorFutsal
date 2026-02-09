@@ -585,8 +585,9 @@ useEffect(() => {
     <div className="flex justify-around bg-white py-3 border-b">
   <button
     onClick={() => setVista('historial')}
-    className="bg-white text-slate-600 p-4 rounded-[24px] flex flex-col items-center justify-center gap-2 border-2 border-slate-100 shadow-lg shadow-slate-100 active:scale-95 transition-all"
+    className="bg-amber text-slate-600 p-4 rounded-[24px] flex flex-col items-center justify-center gap-2 border-2 border-slate-100 shadow-lg shadow-slate-100 active:scale-95 transition-all"
   >
+  <Calendar size={24} className="text-rose-500" />
   <span className="text-[9px] font-black uppercase tracking-widest">  Historial</span>
   </button>
 
@@ -594,6 +595,7 @@ useEffect(() => {
     onClick={() => setVista('plan_diario')}
     className="bg-indigo-600 text-white p-4 rounded-[24px] flex flex-col items-center justify-center gap-2 shadow-xl shadow-indigo-200 active:scale-95 transition-all border-b-4 border-indigo-800"
   >
+  <Tv size={24} />  
   <span className="text-[9px] font-black uppercase tracking-widest">  Plan Diario</span>
   </button>
 
@@ -601,6 +603,7 @@ useEffect(() => {
     onClick={() => setVista('planificador')}
     className="bg-slate-900 text-white p-4 rounded-[24px] flex flex-col items-center justify-center gap-2 shadow-xl shadow-slate-200 active:scale-95 transition-all border-b-4 border-black/30"
   >
+  <History size={24} className="text-indigo-600" />  
   <span className="text-[9px] font-black uppercase tracking-widest"> Planificador</span> 
   </button>
 </div>
