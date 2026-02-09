@@ -582,40 +582,28 @@ useEffect(() => {
         </button>
       }
     />
-  {/* --- COPIAR DESDE AQUÍ --- */}
-<div className="p-4 grid grid-cols-3 gap-3 mb-6">
-  {/* Botón Sesión */}
-  <button 
-    onClick={() => {
-      const hoy = new Date().toISOString().split('T')[0];
-      setSesionActiva({ date: hoy, category: categoriaSel.id, parts: [{ name: 'Físico', duration: 10 }, { name: 'Técnico', duration: 15 }, { name: 'Estrategia', duration: 10 }, { name: 'Partido', duration: 25 }], attendance: {}, result: '', setPieceNotes: '' });
-      setVista('planificador');
-    }} 
-    className="bg-slate-900 text-white p-4 rounded-[24px] flex flex-col items-center justify-center gap-2 shadow-xl shadow-slate-200 active:scale-95 transition-all border-b-4 border-black/30"
-  >
-    <Calendar size={22} className="text-rose-500" />
-    <span className="text-[9px] font-black uppercase tracking-widest">Sesión</span>
-  </button>
-  
-  {/* Botón Pizarra */}
-  <button 
-    onClick={() => setVista('plan_diario')} 
-    className="bg-indigo-600 text-white p-4 rounded-[24px] flex flex-col items-center justify-center gap-2 shadow-xl shadow-indigo-200 active:scale-95 transition-all border-b-4 border-indigo-800"
-  >
-    <Tv size={22} />
-    <span className="text-[9px] font-black uppercase tracking-widest">Pizarra</span>
-  </button>
-  
-  {/* Botón Historial */}
-  <button 
-    onClick={() => setVista('historial')} 
+    <div className="flex justify-around bg-white py-3 border-b">
+  <button
+    onClick={() => setVista('historial')}
     className="bg-white text-slate-600 p-4 rounded-[24px] flex flex-col items-center justify-center gap-2 border-2 border-slate-100 shadow-lg shadow-slate-100 active:scale-95 transition-all"
   >
-    <History size={22} className="text-indigo-600" />
-    <span className="text-[9px] font-black uppercase tracking-widest">Historial</span>
+  <span className="text-[9px] font-black uppercase tracking-widest">  Historial</span>
+  </button>
+
+  <button
+    onClick={() => setVista('plan_diario')}
+    className="bg-indigo-600 text-white p-4 rounded-[24px] flex flex-col items-center justify-center gap-2 shadow-xl shadow-indigo-200 active:scale-95 transition-all border-b-4 border-indigo-800"
+  >
+  <span className="text-[9px] font-black uppercase tracking-widest">  Plan Diario</span>
+  </button>
+
+  <button
+    onClick={() => setVista('planificador')}
+    className="bg-slate-900 text-white p-4 rounded-[24px] flex flex-col items-center justify-center gap-2 shadow-xl shadow-slate-200 active:scale-95 transition-all border-b-4 border-black/30"
+  >
+  <span className="text-[9px] font-black uppercase tracking-widest"> Planificador</span> 
   </button>
 </div>
-{/* --- HASTA AQUÍ --- */}
 
 
     <div className="flex-grow p-6 overflow-y-auto space-y-4 pb-36">
