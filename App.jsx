@@ -810,6 +810,52 @@ useEffect(() => {
   </div>
 )}
 
+{/* === NUEVA SECCIÓN: PUNTAJES DE EJERCICIOS (Colocar después del </section> anterior) === */}
+<section className="space-y-3 mt-6">
+  <h4 className="text-[10px] font-black text-sky-600 uppercase ml-4 tracking-widest">Puntaje de Ejercicios</h4>
+  <div className="bg-white rounded-[32px] border border-slate-200 overflow-hidden shadow-sm divide-y divide-slate-50">
+    {!jugadoraSeleccionada?.activities?.drills || jugadoraSeleccionada.activities.drills.length === 0 ? (
+      <div className="p-6 text-center text-slate-400 text-[10px] font-bold uppercase italic">Sin ejercicios registrados</div>
+    ) : (
+      [...jugadoraSeleccionada.activities.drills].sort((a, b) => b.fechaMs - a.fechaMs).map((drill, i) => (
+        <div key={i} className="p-4 flex justify-between items-center">
+          <div className="flex flex-col">
+            <span className="text-[10px] font-black text-slate-900 uppercase">{drill.etiqueta}</span>
+            <span className="text-xs font-bold text-slate-500">{drill.fechaTexto}</span>
+          </div>
+          <div className="bg-sky-50 px-4 py-2 rounded-2xl border border-sky-100">
+            <span className="text-sm font-black text-sky-700 italic">"{drill.nota}"</span>
+          </div>
+        </div>
+      ))
+    )}
+  </div>
+</section>
+
+{/* === NUEVA SECCIÓN: HISTORIAL DE PAGOS === */}
+<section className="space-y-3 mt-6 pb-10">
+  <h4 className="text-[10px] font-black text-emerald-600 uppercase ml-4 tracking-widest">Historial de Pagos</h4>
+  <div className="bg-white rounded-[32px] border border-slate-200 overflow-hidden shadow-sm divide-y divide-slate-50">
+    {!jugadoraSeleccionada?.activities?.payments || jugadoraSeleccionada.activities.payments.length === 0 ? (
+      <div className="p-6 text-center text-slate-400 text-[10px] font-bold uppercase italic">Sin pagos registrados</div>
+    ) : (
+      [...jugadoraSeleccionada.activities.payments].sort((a, b) => b.fechaMs - a.fechaMs).map((pago, i) => (
+        <div key={i} className="p-4 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <span className="text-xl">💰</span>
+            <div className="flex flex-col">
+              <span className="text-[10px] font-black text-slate-900 uppercase">{pago.etiqueta}</span>
+              <span className="text-xs font-bold text-slate-500">{pago.fechaTexto}</span>
+            </div>
+          </div>
+          <div className="text-right">
+            <span className="text-sm font-black text-emerald-600">${pago.monto}</span>
+          </div>
+        </div>
+      ))
+    )}
+  </div>
+</section>
 
 
       {/* VISTA REGISTRO RÁPIDO */}
